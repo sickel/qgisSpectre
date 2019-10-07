@@ -27,6 +27,8 @@ from qgis.PyQt.QtWidgets import QAction
 # Initialize Qt resources from file resources.py
 from .resources import *
 
+from qgis.core import QgsProject, Qgis
+
 # Import the code for the DockWidget
 from .qgisSpectre_dockwidget import qgisSpectreDockWidget
 import os.path
@@ -207,6 +209,13 @@ class qgisSpectre:
         del self.toolbar
 
     #--------------------------------------------------------------------------
+    def listfields(self):
+        self.dockwidget.cbItem.clear()
+        layername=self.dockwidget.cbLayer.currentText()
+        layers = QgsProject.instance().mapLayersByName(layername) # list of layers named LAYER_NAME
+        layer = layers[0] # first layer named LAYER_NAME.
+        fields = layer.fields().names() #Get Fiels
+        self.dockwidget.cbItem.addItems(fields) #Added to the comboBox
 
     def run(self):
         """Run method that loads and starts the plugin"""
@@ -222,8 +231,16 @@ class qgisSpectre:
             if self.dockwidget == None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = qgisSpectreDockWidget()
-
+            self.dockwidget.cbLayer.currentIndexChanged['QString'].connect(self.listfields)
+        
+            layers = QgsProject.instance().layerTreeRoot().children()
+            # TODO: Only list vector layers
+            # Clear the contents of the comboBox from previous runs
+            self.dockwidget.cbLayer.clear()
+            # Populate the comboBox with names of all the loaded layers
+            self.dockwidget.cbLayer.addItems([layer.name() for layer in layers])
             # connect to provide cleanup on closing of dockwidget
+            self.listfields()
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
 
             # show the dockwidget
