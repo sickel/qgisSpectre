@@ -216,7 +216,20 @@ class qgisSpectre:
         layer = layers[0] # first layer named LAYER_NAME.
         fields = layer.fields().names() #Get Fiels
         self.dockwidget.cbItem.addItems(fields) #Added to the comboBox
-
+    
+    
+    def findselected(self):
+        layername=self.dockwidget.cbLayer.currentText()
+        layers = QgsProject.instance().mapLayersByName(layername) # list of layers named LAYER_NAME
+        layer = layers[0] # first layer named LAYER_NAME.
+        sels=layer.selectedFeatures()
+        n=len(sels)
+        self.iface.messageBar().pushMessage(
+                    "Success", "Selected {} points".format(str(n)),
+                    level=Qgis.Success, duration=3)
+        
+        
+        
     def run(self):
         """Run method that loads and starts the plugin"""
 
@@ -232,7 +245,8 @@ class qgisSpectre:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = qgisSpectreDockWidget()
             self.dockwidget.cbLayer.currentIndexChanged['QString'].connect(self.listfields)
-        
+            #qgis.utils.iface.mapCanvas().selectionChanged.connect(findselected)        
+            self.iface.mapCanvas().selectionChanged.connect(self.findselected)        
             layers = QgsProject.instance().layerTreeRoot().children()
             # TODO: Only list vector layers
             # Clear the contents of the comboBox from previous runs
