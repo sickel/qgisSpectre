@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/qgisSpectre" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
