@@ -230,22 +230,31 @@ class qgisSpectre:
         self.scene.addRect(0,0,1200,300)
         bt=20
         n=bt
+        self.scene.addLine(float(n-1),float(h-bt),float(n-1),10.0) # Y-axis
+        self.scene.addLine(float(n-1),float(h-bt-1),float(len(dataset)+10),float(h-bt-1)) # X-axis
         fact=1.0
-        if max(dataset) > h-bt:
-            fact=(h-bt)/max(dataset)
+        if max(dataset) > h-bt-10:
+            fact=(h-bt-10)/max(dataset)
+        self.iface.messageBar().pushMessage(
+                    "Info", "maxvalue {}".format(str(max(dataset))),
+                    level=Qgis.Success, duration=3)
+            
         for ch in dataset:
             self.scene.addLine(float(n),float(h-bt),float(n),(h-bt-fact*ch))
+            if n%100==0:
+                self.scene.addLine(float(n),float(h-bt),float(n),float(h-bt+5)) # Ticklines
+            
             n+=1
-        #TODO: Add x and y axis
+        #DONE: Add x and y axis
         #TODO: Add scale factors to scale x axis from channel number to keV
         #TODO: Add settings to have custom unit
         #TODO: Custom scales
-        #TODO: Keep spectra
+        #TODO: Possibly keep spectra
         #TODO: Draw spectra as line, not "line-histogram"
-        
+        #TODO: Save as file or export to clipboard
         
     def findselected(self):
-        # Is being run when 
+        # Is being run when points have been selected
         layername=self.dockwidget.cbLayer.currentText()
         layers = QgsProject.instance().mapLayersByName(layername) # list of layers with selected name
         layer = layers[0] # first layer .
@@ -267,7 +276,7 @@ class qgisSpectre:
                     if sumspectre == None:
                         sumspectre = spectre
                     else:
-                        sumspectre = list( map(add, spectre, spectre))
+                        sumspectre = list( map(add, spectre, sumspectre))
                 self.drawspectra(sumspectre)
             else:
                 self.iface.messageBar().pushMessage(
