@@ -23,10 +23,12 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction,QGraphicsScene
 # Initialize Qt resources from file resources.py
 from .resources import *
+from operator import add # To add spectra
 
+from PyQt5 import QtCore,QtGui
 from qgis.core import QgsProject, Qgis
 
 # Import the code for the DockWidget
@@ -217,7 +219,19 @@ class qgisSpectre:
         fields = layer.fields().names() #Get Fiels
         self.dockwidget.cbItem.addItems(fields) #Added to the comboBox
     
-    
+    def drawspectra(self,dataset):
+        h=300
+        self.scene.clear()
+        self.scene.addRect(0,0,1200,300)
+        bt=10
+        n=10
+        fact=1.0
+        if max(dataset) > h-bt:
+            fact=(h-bt)/max(dataset)
+        for ch in dataset:
+            self.scene.addLine(float(n),float(h-bt),float(n),(h-bt-fact*ch))
+            n+=1
+        
     def findselected(self):
         layername=self.dockwidget.cbLayer.currentText()
         layers = QgsProject.instance().mapLayersByName(layername) # list of layers named LAYER_NAME
@@ -227,8 +241,22 @@ class qgisSpectre:
         self.iface.messageBar().pushMessage(
                     "Success", "Selected {} points".format(str(n)),
                     level=Qgis.Success, duration=3)
-        
-        
+        if n>0:
+            fieldname=self.dockwidget.cbItem.currentText()
+            if isinstance(sels[0][fieldname],list):
+                spectre = None
+                for sel in sels:
+                    if spectre == None:
+                        spectre = sel[fieldname]
+                    else:
+                        spectre = list( map(add, spectre, sel[fieldname]) )
+                self.drawspectra(spectre)
+            else:
+                self.iface.messageBar().pushMessage(
+                    "Error", "Use an array field",
+                    level=Qgis.Success, duration=3)
+                
+                
         
     def run(self):
         """Run method that loads and starts the plugin"""
@@ -244,7 +272,10 @@ class qgisSpectre:
             if self.dockwidget == None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = qgisSpectreDockWidget()
+            self.scene=QGraphicsScene()
+            self.dockwidget.graphicsView.setScene(self.scene)
             self.dockwidget.cbLayer.currentIndexChanged['QString'].connect(self.listfields)
+            self.scene.setSceneRect(0,0,1200,300)
             #qgis.utils.iface.mapCanvas().selectionChanged.connect(findselected)        
             self.iface.mapCanvas().selectionChanged.connect(self.findselected)        
             layers = QgsProject.instance().layerTreeRoot().children()
