@@ -209,48 +209,66 @@ class qgisSpectre:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
-
+    
+    # Boilerplate so far
     #--------------------------------------------------------------------------
+    
     def listfields(self):
+        # When selecting a new layer. List fields for that layer
         self.dockwidget.cbItem.clear()
         layername=self.dockwidget.cbLayer.currentText()
-        layers = QgsProject.instance().mapLayersByName(layername) # list of layers named LAYER_NAME
-        layer = layers[0] # first layer named LAYER_NAME.
+        layers = QgsProject.instance().mapLayersByName(layername) # list of layers with any name
+        layer = layers[0] # first layer .
         fields = layer.fields().names() #Get Fiels
+        # TODO: Add only if array field
         self.dockwidget.cbItem.addItems(fields) #Added to the comboBox
     
     def drawspectra(self,dataset):
+        # Drawing the spectra on the graphicsstage
         h=300
         self.scene.clear()
         self.scene.addRect(0,0,1200,300)
-        bt=10
-        n=10
+        bt=20
+        n=bt
         fact=1.0
         if max(dataset) > h-bt:
             fact=(h-bt)/max(dataset)
         for ch in dataset:
             self.scene.addLine(float(n),float(h-bt),float(n),(h-bt-fact*ch))
             n+=1
+        #TODO: Add x and y axis
+        #TODO: Add scale factors to scale x axis from channel number to keV
+        #TODO: Add settings to have custom unit
+        #TODO: Custom scales
+        #TODO: Keep spectra
+        #TODO: Draw spectra as line, not "line-histogram"
+        
         
     def findselected(self):
+        # Is being run when 
         layername=self.dockwidget.cbLayer.currentText()
-        layers = QgsProject.instance().mapLayersByName(layername) # list of layers named LAYER_NAME
-        layer = layers[0] # first layer named LAYER_NAME.
-        sels=layer.selectedFeatures()
+        layers = QgsProject.instance().mapLayersByName(layername) # list of layers with selected name
+        layer = layers[0] # first layer .
+        #TODO: THis is a kludge. More layers may have same name in qgis. By doing this, it is only possible 
+        #      to plot spectra from the first layer if more have the same name 
+        sels=layer.selectedFeatures() # The selected features in the active (from this plugin's point of view) layer
         n=len(sels)
-        self.iface.messageBar().pushMessage(
+        if n>0:
+            self.iface.messageBar().pushMessage(
                     "Success", "Selected {} points".format(str(n)),
                     level=Qgis.Success, duration=3)
-        if n>0:
             fieldname=self.dockwidget.cbItem.currentText()
             if isinstance(sels[0][fieldname],list):
-                spectre = None
+                sumspectre = None
                 for sel in sels:
-                    if spectre == None:
-                        spectre = sel[fieldname]
+                    spectre=sel[fieldname]
+                    del spectre[-1] # To get rid of last channel i.e. cosmic from RSI-spectra
+                                    # TODO: Make this customable
+                    if sumspectre == None:
+                        sumspectre = spectre
                     else:
-                        spectre = list( map(add, spectre, sel[fieldname]) )
-                self.drawspectra(spectre)
+                        sumspectre = list( map(add, spectre, spectre))
+                self.drawspectra(sumspectre)
             else:
                 self.iface.messageBar().pushMessage(
                     "Error", "Use an array field",
@@ -272,20 +290,25 @@ class qgisSpectre:
             if self.dockwidget == None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = qgisSpectreDockWidget()
+            # Setting the scene to plot spectra
             self.scene=QGraphicsScene()
             self.dockwidget.graphicsView.setScene(self.scene)
-            self.dockwidget.cbLayer.currentIndexChanged['QString'].connect(self.listfields)
             self.scene.setSceneRect(0,0,1200,300)
-            #qgis.utils.iface.mapCanvas().selectionChanged.connect(findselected)        
+            # Relisting field when new layer is selected:
+            self.dockwidget.cbLayer.currentIndexChanged['QString'].connect(self.listfields)
+            # Replotting spectre when a new selection is made
             self.iface.mapCanvas().selectionChanged.connect(self.findselected)        
-            layers = QgsProject.instance().layerTreeRoot().children()
+            # Listing layers
             # TODO: Only list vector layers
-            # Clear the contents of the comboBox from previous runs
+            # TODO: Repopulate when layers are added or removed
+            layers = QgsProject.instance().layerTreeRoot().children()
             self.dockwidget.cbLayer.clear()
-            # Populate the comboBox with names of all the loaded layers
             self.dockwidget.cbLayer.addItems([layer.name() for layer in layers])
-            # connect to provide cleanup on closing of dockwidget
             self.listfields()
+            
+            #Boilerplate below:
+            
+            # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
 
             # show the dockwidget
