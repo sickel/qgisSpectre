@@ -243,8 +243,12 @@ class qgisSpectre:
             self.scene.addLine(float(n),float(h-bt),float(n),(h-bt-fact*ch))
             if n%100==0:
                 self.scene.addLine(float(n),float(h-bt),float(n),float(h-bt+5)) # Ticklines
-            
+                text=self.scene.addText(str(n))
+                text.setPos(n+bt-40, 280)
             n+=1
+        text=self.scene.addText(self.unit)
+        text.setPos(n+50, 280)
+        
         #DONE: Add x and y axis
         #TODO: Add scale factors to scale x axis from channel number to keV
         #TODO: Add settings to have custom unit
@@ -300,6 +304,7 @@ class qgisSpectre:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = qgisSpectreDockWidget()
             # Setting the scene to plot spectra
+            self.unit='Ch'
             self.scene=QGraphicsScene()
             self.dockwidget.graphicsView.setScene(self.scene)
             self.scene.setSceneRect(0,0,1200,300)
