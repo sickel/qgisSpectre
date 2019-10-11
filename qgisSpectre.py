@@ -22,8 +22,9 @@
  ***************************************************************************/
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
+import qgis.PyQt.QtCore
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction,QGraphicsScene
+from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication
 # Initialize Qt resources from file resources.py
 from .resources import *
 from operator import add # To add spectra
@@ -232,7 +233,7 @@ class qgisSpectre:
         #TODO: Possibly keep spectra
         #TODO: Draw spectra as line, not "line-histogram"
         #TODO: Save as file or export to clipboard
-         
+        self.spectre=dataset
         h=300 # HEight of stage
         self.scene.clear()
         self.scene.addRect(0,0,1200,300)
@@ -247,7 +248,8 @@ class qgisSpectre:
             fact=(h-bt-10)/max(dataset)
         for ch in dataset:
             # TODO: Use another form of plot. Multiline?
-            self.scene.addLine(float(n),float(h-bt),float(n),(h-bt-fact*ch))
+       #     self.scene.addLine(float(n),float(h-bt),float(n),(h-bt-fact*ch))
+            self.scene.addLine(float(n),float(h-(bt+4)-fact*ch),float(n),(h-bt-fact*ch))
             # making a tick mark for each 100th channel. This must be retought when energy calibration is available
             if n%100==0:
                 self.scene.addLine(float(n),float(h-bt),float(n),float(h-bt+5)) # Ticklines
@@ -289,7 +291,21 @@ class qgisSpectre:
                     "Error", "Use an array field",
                     level=Qgis.Success, duration=3)
                 
-                
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MidButton:
+            self.__prevMousePos = event.pos()
+        elif event.button() == Qt.RightButton: # <--- add this 
+            self.iface.messageBar().pushMessage(
+                    "Success", "Pressed right",
+                    level=Qgis.Success, duration=3)
+            print('right')
+        else:
+            super(MyView, self).mousePressEvent(event)
+        
+    def spectreToClipboard(self):
+        clipboard = QApplication.clipboard()
+        text=",".join(str(x) for x in self.spectre)
+        clipboard.setText(text)
         
     def run(self):
         """Run method that loads and starts the plugin"""
@@ -305,6 +321,7 @@ class qgisSpectre:
             if self.dockwidget == None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = qgisSpectreDockWidget()
+            self.spectre=[]
             # Setting the scene to plot spectra
             self.unit='Ch'
             self.scene=QGraphicsScene()
@@ -321,7 +338,7 @@ class qgisSpectre:
             self.dockwidget.cbLayer.clear()
             self.dockwidget.cbLayer.addItems([layer.name() for layer in layers])
             self.listfields()
-            
+            self.dockwidget.pBCopy.clicked.connect(self.spectreToClipboard)
             #Boilerplate below:
             
             # connect to provide cleanup on closing of dockwidget
