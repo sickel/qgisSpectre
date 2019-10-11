@@ -220,27 +220,35 @@ class qgisSpectre:
         layers = QgsProject.instance().mapLayersByName(layername) # list of layers with any name
         layer = layers[0] # first layer .
         fields = layer.fields().names() #Get Fiels
-        # TODO: Add only if array field
+        # TODO: Add only if array field, but c.f the idea on using comma-separated numbers
         self.dockwidget.cbItem.addItems(fields) #Added to the comboBox
     
     def drawspectra(self,dataset):
         # Drawing the spectra on the graphicsstage
-        h=300
+        #DONE: Add x and y axis
+        #TODO: Add scale factors to scale x axis from channel number to keV
+        #TODO: Add settings to have custom unit
+        #TODO: Custom scales
+        #TODO: Possibly keep spectra
+        #TODO: Draw spectra as line, not "line-histogram"
+        #TODO: Save as file or export to clipboard
+         
+        h=300 # HEight of stage
         self.scene.clear()
         self.scene.addRect(0,0,1200,300)
-        bt=20
-        n=bt
+        bt=20 # Bottom clearing (for x tick marks and labels)
+        n=bt  # Left clearing (for y tick marks and labels)
         self.scene.addLine(float(n-1),float(h-bt),float(n-1),10.0) # Y-axis
         self.scene.addLine(float(n-1),float(h-bt-1),float(len(dataset)+10),float(h-bt-1)) # X-axis
+        # Need to scale it down if the total number of counts > height of plot
+        # TODO: Customizable scale
         fact=1.0
         if max(dataset) > h-bt-10:
             fact=(h-bt-10)/max(dataset)
-        self.iface.messageBar().pushMessage(
-                    "Info", "maxvalue {}".format(str(max(dataset))),
-                    level=Qgis.Success, duration=3)
-            
         for ch in dataset:
+            # TODO: Use another form of plot. Multiline?
             self.scene.addLine(float(n),float(h-bt),float(n),(h-bt-fact*ch))
+            # making a tick mark for each 100th channel. This must be retought when energy calibration is available
             if n%100==0:
                 self.scene.addLine(float(n),float(h-bt),float(n),float(h-bt+5)) # Ticklines
                 text=self.scene.addText(str(n))
@@ -249,20 +257,13 @@ class qgisSpectre:
         text=self.scene.addText(self.unit)
         text.setPos(n+50, 280)
         
-        #DONE: Add x and y axis
-        #TODO: Add scale factors to scale x axis from channel number to keV
-        #TODO: Add settings to have custom unit
-        #TODO: Custom scales
-        #TODO: Possibly keep spectra
-        #TODO: Draw spectra as line, not "line-histogram"
-        #TODO: Save as file or export to clipboard
         
     def findselected(self):
         # Is being run when points have been selected
         layername=self.dockwidget.cbLayer.currentText()
         layers = QgsProject.instance().mapLayersByName(layername) # list of layers with selected name
         layer = layers[0] # first layer .
-        #TODO: THis is a kludge. More layers may have same name in qgis. By doing this, it is only possible 
+        #TODO: This is a kludge. More layers may have same name in qgis. By doing this, it is only possible 
         #      to plot spectra from the first layer if more have the same name 
         sels=layer.selectedFeatures() # The selected features in the active (from this plugin's point of view) layer
         n=len(sels)
@@ -271,6 +272,7 @@ class qgisSpectre:
                     "Success", "Selected {} points".format(str(n)),
                     level=Qgis.Success, duration=3)
             fieldname=self.dockwidget.cbItem.currentText()
+            # TODO: Rewrite to make it possible to read in a spectra as a string of comma-separated numbers
             if isinstance(sels[0][fieldname],list):
                 sumspectre = None
                 for sel in sels:
