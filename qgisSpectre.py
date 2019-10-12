@@ -292,6 +292,15 @@ class qgisSpectre:
                     level=Qgis.Success, duration=3)
                 
     def mousePressEvent(self, event):
+        self.iface.messageBar().pushMessage(
+                    "Success", "Pressed",
+                    level=Qgis.Success, duration=3)
+            
+        x = event.scenePos().x()
+        y = event.scenePos().y()
+        if x != None:
+            coords=self.scene.addText(str(x)+" "+str(y))
+            coords.setPos(10,10)
         if event.button() == Qt.MidButton:
             self.__prevMousePos = event.pos()
         elif event.button() == Qt.RightButton: # <--- add this 
@@ -321,6 +330,11 @@ class qgisSpectre:
             if self.dockwidget == None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = qgisSpectreDockWidget()
+            self.iface.messageBar().pushMessage(
+                    "Success", "Pressed",
+                    level=Qgis.Success, duration=3)
+            self.acalib=3
+            self.bcalib=0
             self.spectre=[]
             # Setting the scene to plot spectra
             self.unit='Ch'
