@@ -246,16 +246,26 @@ class qgisSpectre:
         fact=1.0
         if max(dataset) > h-bt-10:
             fact=(h-bt-10)/max(dataset)
+        prevch=0
         for ch in dataset:
             # TODO: Use another form of plot. Multiline?
        #     self.scene.addLine(float(n),float(h-bt),float(n),(h-bt-fact*ch))
-            self.scene.addLine(float(n),float(h-(bt+4)-fact*ch),float(n),(h-bt-fact*ch))
+       #     self.scene.addLine(float(n),float(h-(bt+4)-fact*ch),float(n),(h-bt-fact*ch))
+            self.scene.addLine(float(n),float(h-bt-fact*prevch),float(n+1),(h-bt-fact*ch))
+            prevch=ch
             # making a tick mark for each 100th channel. This must be retought when energy calibration is available
-            if n%100==0:
-                self.scene.addLine(float(n),float(h-bt),float(n),float(h-bt+5)) # Ticklines
-                text=self.scene.addText(str(n))
-                text.setPos(n+bt-40, 280)
+            #if n%100==0:
+            #    self.scene.addLine(float(n),float(h-bt),float(n),float(h-bt+5)) # Ticklines
+            #    text=self.scene.addText(str(n))
+            #    text.setPos(n+bt-40, 280)
             n+=1
+        tickval=self.tickinterval
+        while tickval < self.acalib*n+self.bcalib:
+            tickch=(tickval-self.bcalib)/self.acalib
+            self.scene.addLine(float(tickch),float(h-bt),float(tickch),float(h-bt+5)) # Ticklines
+            text=self.scene.addText(str(tickval))
+            text.setPos(tickch+bt-40, 280)
+            tickval+=self.tickinterval
         text=self.scene.addText(self.unit)
         text.setPos(n+50, 280)
         
@@ -271,7 +281,7 @@ class qgisSpectre:
         n=len(sels)
         if n>0:
             self.iface.messageBar().pushMessage(
-                    "Success", "Selected {} points".format(str(n)),
+                    "Drawing", "Selected {} points".format(str(n)),
                     level=Qgis.Success, duration=3)
             fieldname=self.dockwidget.cbItem.currentText()
             # TODO: Rewrite to make it possible to read in a spectra as a string of comma-separated numbers
@@ -295,7 +305,7 @@ class qgisSpectre:
         self.iface.messageBar().pushMessage(
                     "Success", "Pressed",
                     level=Qgis.Success, duration=3)
-            
+        
         x = event.scenePos().x()
         y = event.scenePos().y()
         if x != None:
@@ -330,11 +340,10 @@ class qgisSpectre:
             if self.dockwidget == None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = qgisSpectreDockWidget()
-            self.iface.messageBar().pushMessage(
-                    "Success", "Pressed",
-                    level=Qgis.Success, duration=3)
-            self.acalib=3
+            self.acalib=2.7
             self.bcalib=0
+            self.tickinterval=100
+            # The three former to be user-settable
             self.spectre=[]
             # Setting the scene to plot spectra
             self.unit='Ch'

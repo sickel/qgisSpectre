@@ -34,14 +34,25 @@
     <item row="2" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout"/>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pBCopy">
-        <property name="text">
-         <string>Copy</string>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetFixedSize</enum>
         </property>
-       </widget>
+        <item>
+         <widget class="QPushButton" name="pBSettings">
+          <property name="text">
+           <string>Settings</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pBCopy">
+          <property name="text">
+           <string>Copy</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="QGraphicsView" name="graphicsView"/>
