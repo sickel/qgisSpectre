@@ -32,7 +32,7 @@ from .resources import *
 from operator import add # To add spectra
 
 from PyQt5 import QtCore,QtGui
-from qgis.core import QgsProject, Qgis
+from qgis.core import QgsProject, Qgis, QgsMapLayerType, QgsMapLayer
 
 # Import the code for the DockWidget
 from .qgisSpectre_dockwidget import qgisSpectreDockWidget
@@ -350,7 +350,10 @@ class qgisSpectre:
             # TODO: Repopulate when layers are added or removed
             layers = QgsProject.instance().layerTreeRoot().children()
             self.dlg.cbLayer.clear()
-            self.dlg.cbLayer.addItems([layer.name() for layer in layers])
+            for layer in layers:
+                #if layer.layer().type==QgsMapLayerType.VectorLayer:
+                   self.dlg.cbLayer.addItem(layer.name())
+            #self.dlg.cbLayer.addItems([layer.name() for layer in layers])
             self.listfields()
             self.dlg.pBCopy.clicked.connect(self.spectreToClipboard)
             #Boilerplate below:
