@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from os import sys
+sys.path.append("/usr/lib/python3/dist-packages/")
 """
 /***************************************************************************
  qgisSpectre
@@ -24,7 +26,7 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 import qgis.PyQt.QtCore
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication
+from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication,QGraphicsView
 # Initialize Qt resources from file resources.py
 from .resources import *
 from operator import add # To add spectra
@@ -73,6 +75,8 @@ class qgisSpectre:
         self.toolbar = self.iface.addToolBar(u'qgisSpectre')
         self.toolbar.setObjectName(u'qgisSpectre')
 
+
+        self.view = MouseReadGraphicsView(self.iface)
         #print "** INITIALIZING qgisSpectre"
 
         self.pluginIsActive = False
@@ -178,7 +182,11 @@ class qgisSpectre:
             text=self.tr(u'View Spectra'),
             callback=self.run,
             parent=self.iface.mainWindow())
-
+        self.dlg=qgisSpectreDockWidget(self.iface.mainWindow())
+        self.view.setParent(self.dlg) # Adding in customized QGraphicsView
+        self.dlg.hlMain.addWidget(self.view)
+        self.dlg.cbLayer.currentIndexChanged['QString'].connect(self.listfields)
+            
     #--------------------------------------------------------------------------
 
     def onClosePlugin(self):
@@ -187,7 +195,7 @@ class qgisSpectre:
         #print "** CLOSING qgisSpectre"
 
         # disconnects
-        self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
+        self.dlg.closingPlugin.disconnect(self.onClosePlugin)
 
         # remove this statement if dockwidget is to remain
         # for reuse if plugin is reopened
@@ -216,13 +224,15 @@ class qgisSpectre:
     
     def listfields(self):
         # When selecting a new layer. List fields for that layer
-        self.dockwidget.cbItem.clear()
-        layername=self.dockwidget.cbLayer.currentText()
+        self.dlg.cbItem.clear()
+        layername=self.dlg.cbLayer.currentText()
         layers = QgsProject.instance().mapLayersByName(layername) # list of layers with any name
+        if len(layers)==0:
+            return
         layer = layers[0] # first layer .
         fields = layer.fields().names() #Get Fiels
         # TODO: Add only if array field, but c.f the idea on using comma-separated numbers
-        self.dockwidget.cbItem.addItems(fields) #Added to the comboBox
+        self.dlg.cbItem.addItems(fields) #Added to the comboBox
     
     def drawspectra(self,dataset):
         # Drawing the spectra on the graphicsstage
@@ -233,9 +243,10 @@ class qgisSpectre:
         #TODO: Possibly keep spectra
         #TODO: Draw spectra as line, not "line-histogram"
         #TODO: Save as file or export to clipboard
-        self.spectre=dataset
+        self.spectre=dataset    
         h=300 # HEight of stage
         self.scene.clear()
+        self.scene.crdtext=None
         self.scene.addRect(0,0,1200,300)
         bt=20 # Bottom clearing (for x tick marks and labels)
         n=bt  # Left clearing (for y tick marks and labels)
@@ -272,7 +283,7 @@ class qgisSpectre:
         
     def findselected(self):
         # Is being run when points have been selected
-        layername=self.dockwidget.cbLayer.currentText()
+        layername=self.dlg.cbLayer.currentText()
         layers = QgsProject.instance().mapLayersByName(layername) # list of layers with selected name
         layer = layers[0] # first layer .
         #TODO: This is a kludge. More layers may have same name in qgis. By doing this, it is only possible 
@@ -283,7 +294,7 @@ class qgisSpectre:
             self.iface.messageBar().pushMessage(
                     "Drawing", "Selected {} points".format(str(n)),
                     level=Qgis.Success, duration=3)
-            fieldname=self.dockwidget.cbItem.currentText()
+            fieldname=self.dlg.cbItem.currentText()
             # TODO: Rewrite to make it possible to read in a spectra as a string of comma-separated numbers
             if isinstance(sels[0][fieldname],list):
                 sumspectre = None
@@ -301,26 +312,6 @@ class qgisSpectre:
                     "Error", "Use an array field",
                     level=Qgis.Success, duration=3)
                 
-    def mousePressEvent(self, event):
-        self.iface.messageBar().pushMessage(
-                    "Success", "Pressed",
-                    level=Qgis.Success, duration=3)
-        
-        x = event.scenePos().x()
-        y = event.scenePos().y()
-        if x != None:
-            coords=self.scene.addText(str(x)+" "+str(y))
-            coords.setPos(10,10)
-        if event.button() == Qt.MidButton:
-            self.__prevMousePos = event.pos()
-        elif event.button() == Qt.RightButton: # <--- add this 
-            self.iface.messageBar().pushMessage(
-                    "Success", "Pressed right",
-                    level=Qgis.Success, duration=3)
-            print('right')
-        else:
-            super(MyView, self).mousePressEvent(event)
-        
     def spectreToClipboard(self):
         clipboard = QApplication.clipboard()
         text=",".join(str(x) for x in self.spectre)
@@ -348,26 +339,48 @@ class qgisSpectre:
             # Setting the scene to plot spectra
             self.unit='Ch'
             self.scene=QGraphicsScene()
-            self.dockwidget.graphicsView.setScene(self.scene)
+            self.scene.crdtext=None
+            self.view.setScene(self.scene)
             self.scene.setSceneRect(0,0,1200,300)
             # Relisting field when new layer is selected:
-            self.dockwidget.cbLayer.currentIndexChanged['QString'].connect(self.listfields)
             # Replotting spectre when a new selection is made
             self.iface.mapCanvas().selectionChanged.connect(self.findselected)        
             # Listing layers
             # TODO: Only list vector layers
             # TODO: Repopulate when layers are added or removed
             layers = QgsProject.instance().layerTreeRoot().children()
-            self.dockwidget.cbLayer.clear()
-            self.dockwidget.cbLayer.addItems([layer.name() for layer in layers])
+            self.dlg.cbLayer.clear()
+            self.dlg.cbLayer.addItems([layer.name() for layer in layers])
             self.listfields()
-            self.dockwidget.pBCopy.clicked.connect(self.spectreToClipboard)
+            self.dlg.pBCopy.clicked.connect(self.spectreToClipboard)
             #Boilerplate below:
             
             # connect to provide cleanup on closing of dockwidget
-            self.dockwidget.closingPlugin.connect(self.onClosePlugin)
+            self.dlg.closingPlugin.connect(self.onClosePlugin)
 
             # show the dockwidget
             # TODO: fix to allow choice of dock location
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.dockwidget)
-            self.dockwidget.show()
+            #self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.dockwidget)
+            self.iface.mainWindow().addDockWidget(Qt.BottomDockWidgetArea, self.dlg)
+            self.dlg.show()
+
+
+class MouseReadGraphicsView(QGraphicsView):
+    def __init__(self, iface):
+        self.iface = iface
+        QGraphicsView.__init__(self)
+        
+        
+        
+    def mousePressEvent(self, event):
+        if event.button() == 1:
+            x = event.x()
+            y = event.y()
+            if x != None:
+                coords=str(x)+" "+str(y)
+        #        self.iface.messageBar().pushMessage(coords,duration=3)
+                if self.scene().crdtext!=None:
+                    self.scene().removeItem(self.scene().crdtext)
+                self.scene().crdtext=self.scene().addText(coords)
+                self.scene().crdtext.setPos(10,10)
+        
