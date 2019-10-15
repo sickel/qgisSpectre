@@ -237,12 +237,13 @@ class qgisSpectre:
     def drawspectra(self,dataset):
         # Drawing the spectra on the graphicsstage
         #DONE: Add x and y axis
-        #TODO: Add scale factors to scale x axis from channel number to keV
+        #DONE: Add scale factors to scale x axis from channel number to keV
         #TODO: Add settings to have custom unit
         #TODO: Custom scales
         #TODO: Possibly keep spectra
-        #TODO: Draw spectra as line, not "line-histogram"
-        #TODO: Save as file or export to clipboard
+        #DONE: Draw spectra as line, not "line-histogram"
+        #TODO: Save as file 
+        #DONE: export to clipboard
         self.spectre=dataset    
         h=300 # HEight of stage
         self.scene.clear()
@@ -259,20 +260,15 @@ class qgisSpectre:
             fact=(h-bt-10)/max(dataset)
         prevch=0
         for ch in dataset:
-            # TODO: Use another form of plot. Multiline?
+            # DONE: Use another form of plot. Multiline?
        #     self.scene.addLine(float(n),float(h-bt),float(n),(h-bt-fact*ch))
        #     self.scene.addLine(float(n),float(h-(bt+4)-fact*ch),float(n),(h-bt-fact*ch))
             self.scene.addLine(float(n),float(h-bt-fact*prevch),float(n+1),(h-bt-fact*ch))
             prevch=ch
-            # making a tick mark for each 100th channel. This must be retought when energy calibration is available
-            #if n%100==0:
-            #    self.scene.addLine(float(n),float(h-bt),float(n),float(h-bt+5)) # Ticklines
-            #    text=self.scene.addText(str(n))
-            #    text.setPos(n+bt-40, 280)
             n+=1
         tickval=self.tickinterval
-        while tickval < self.acalib*n+self.bcalib:
-            tickch=(tickval-self.bcalib)/self.acalib
+        while tickval < self.scene.acalib*n+self.scene.bcalib:
+            tickch=(tickval-self.scene.bcalib)/self.scene.acalib
             self.scene.addLine(float(tickch),float(h-bt),float(tickch),float(h-bt+5)) # Ticklines
             text=self.scene.addText(str(tickval))
             text.setPos(tickch+bt-40, 280)
@@ -331,8 +327,6 @@ class qgisSpectre:
             if self.dockwidget == None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = qgisSpectreDockWidget()
-            self.acalib=2.7
-            self.bcalib=0
             self.tickinterval=100
             # The three former to be user-settable
             self.spectre=[]
@@ -340,6 +334,8 @@ class qgisSpectre:
             self.unit='Ch'
             self.scene=QGraphicsScene()
             self.scene.crdtext=None
+            self.scene.acalib=2.7
+            self.scene.bcalib=0
             self.view.setScene(self.scene)
             self.scene.setSceneRect(0,0,1200,300)
             # Relisting field when new layer is selected:
