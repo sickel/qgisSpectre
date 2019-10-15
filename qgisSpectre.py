@@ -218,8 +218,6 @@ class qgisSpectre:
         # remove the toolbar
         del self.toolbar
     
-    # Boilerplate so far
-    #--------------------------------------------------------------------------
     
     def listfields(self):
         # When selecting a new layer. List fields for that layer
@@ -241,16 +239,20 @@ class qgisSpectre:
         #TODO: Custom scales
         #TODO: Possibly keep spectra
         #DONE: Draw spectra as line, not "line-histogram"
+        #TODO: Select different types of 
         #TODO: Save as file 
         #DONE: export to clipboard
         self.spectre=dataset    
-        h=300 # HEight of stage
+        self.scene.h=300 # HEight of stage
         self.scene.clear()
         self.scene.crdtext=None
         self.scene.markerline=None
         self.scene.addRect(0,0,1200,300)
-        bt=20 # Bottom clearing (for x tick marks and labels)
-        n=bt  # Left clearing (for y tick marks and labels)
+        self.scene.bottom=20 # Bottom clearing (for x tick marks and labels)
+        self.scene.left=self.scene.bottom # Left clearing (for y tick marks and labels)
+        n=self.scene.left
+        bt=self.scene.bottom
+        h=self.scene.h
         self.scene.addLine(float(n-1),float(h-bt),float(n-1),10.0) # Y-axis
         self.scene.addLine(float(n-1),float(h-bt-1),float(len(dataset)+10),float(h-bt-1)) # X-axis
         # Need to scale it down if the total number of counts > height of plot
@@ -267,11 +269,12 @@ class qgisSpectre:
             prevch=ch
             n+=1
         tickval=self.tickinterval
+        left=self.scene.left
         while tickval < self.scene.acalib*n+self.scene.bcalib:
-            tickch=(tickval-self.scene.bcalib)/self.scene.acalib
+            tickch=(tickval-self.scene.bcalib)/self.scene.acalib+left
             self.scene.addLine(float(tickch),float(h-bt),float(tickch),float(h-bt+5)) # Ticklines
             text=self.scene.addText(str(tickval))
-            text.setPos(tickch+bt-40, 280)
+            text.setPos(tickch+left-40, 280)
             tickval+=self.tickinterval
         text=self.scene.addText(self.unit)
         text.setPos(n+50, 280)
@@ -370,10 +373,9 @@ class MouseReadGraphicsView(QGraphicsView):
             coords=self.mapToScene(event.pos())    
             x = coords.x()
             if x != None:
-                energy=x*self.scene().acalib+self.scene().bcalib
-                # TODO: draw a vertical line where clicked. Mark energy
+                energy=(x-self.scene().left)*self.scene().acalib+self.scene().bcalib
+                # DONE: draw a vertical line where clicked. Mark energy
                 coords=str(int(energy))+" keV"
-        #        self.iface.messageBar().pushMessage(coords,duration=3)
                 if self.scene().crdtext!=None:
                     self.scene().removeItem(self.scene().crdtext)
                 self.scene().crdtext=self.scene().addText(coords)
