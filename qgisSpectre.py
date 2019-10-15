@@ -80,8 +80,7 @@ class qgisSpectre:
         #print "** INITIALIZING qgisSpectre"
 
         self.pluginIsActive = False
-        self.dockwidget = None
-
+        
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -202,7 +201,7 @@ class qgisSpectre:
         # Commented next statement since it causes QGIS crashe
         # when closing the docked window:
         # self.dockwidget = None
-
+        
         self.pluginIsActive = False
 
 
@@ -248,6 +247,7 @@ class qgisSpectre:
         h=300 # HEight of stage
         self.scene.clear()
         self.scene.crdtext=None
+        self.scene.markerline=None
         self.scene.addRect(0,0,1200,300)
         bt=20 # Bottom clearing (for x tick marks and labels)
         n=bt  # Left clearing (for y tick marks and labels)
@@ -321,12 +321,6 @@ class qgisSpectre:
 
             #print "** STARTING qgisSpectre"
 
-            # dockwidget may not exist if:
-            #    first run of plugin
-            #    removed on close (see self.onClosePlugin method)
-            if self.dockwidget == None:
-                # Create the dockwidget (after translation) and keep reference
-                self.dockwidget = qgisSpectreDockWidget()
             self.tickinterval=100
             # The three former to be user-settable
             self.spectre=[]
@@ -334,6 +328,7 @@ class qgisSpectre:
             self.unit='Ch'
             self.scene=QGraphicsScene()
             self.scene.crdtext=None
+            self.scene.markerline=None
             self.scene.acalib=2.7
             self.scene.bcalib=0
             self.view.setScene(self.scene)
@@ -359,7 +354,6 @@ class qgisSpectre:
 
             # show the dockwidget
             # TODO: fix to allow choice of dock location
-            #self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.dockwidget)
             self.iface.mainWindow().addDockWidget(Qt.BottomDockWidgetArea, self.dlg)
             self.dlg.show()
 
@@ -373,13 +367,17 @@ class MouseReadGraphicsView(QGraphicsView):
         
     def mousePressEvent(self, event):
         if event.button() == 1:
-            x = event.x()
+            coords=self.mapToScene(event.pos())    
+            x = coords.x()
             y = event.y()
             if x != None:
+                # TODO: draw a vertical line where clicked. Mark energy
                 coords=str(x)+" "+str(y)
         #        self.iface.messageBar().pushMessage(coords,duration=3)
                 if self.scene().crdtext!=None:
                     self.scene().removeItem(self.scene().crdtext)
                 self.scene().crdtext=self.scene().addText(coords)
-                self.scene().crdtext.setPos(10,10)
-        
+                self.scene().crdtext.setPos(x,10)
+                if self.scene().markerline!=None:
+                    self.scene().removeItem(self.scene().markerline)
+                self.scene().markerline=self.scene().addLine(x,0,x,300)
