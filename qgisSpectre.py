@@ -329,7 +329,7 @@ class qgisSpectre:
             self.scene=QGraphicsScene()
             self.scene.crdtext=None
             self.scene.markerline=None
-            self.scene.acalib=2.7
+            self.scene.acalib=2.75
             self.scene.bcalib=0
             self.view.setScene(self.scene)
             self.scene.setSceneRect(0,0,1200,300)
@@ -369,10 +369,10 @@ class MouseReadGraphicsView(QGraphicsView):
         if event.button() == 1:
             coords=self.mapToScene(event.pos())    
             x = coords.x()
-            y = event.y()
             if x != None:
+                energy=x*self.scene().acalib+self.scene().bcalib
                 # TODO: draw a vertical line where clicked. Mark energy
-                coords=str(x)+" "+str(y)
+                coords=str(int(energy))+" keV"
         #        self.iface.messageBar().pushMessage(coords,duration=3)
                 if self.scene().crdtext!=None:
                     self.scene().removeItem(self.scene().crdtext)
