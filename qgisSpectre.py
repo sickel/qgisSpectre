@@ -26,7 +26,7 @@ sys.path.append("/usr/lib/python3/dist-packages/")
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 import qgis.PyQt.QtCore
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication,QGraphicsView
+from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication,QGraphicsView,QCheckBox
 # Initialize Qt resources from file resources.py
 from .resources import *
 from operator import add # To add spectra
@@ -37,7 +37,7 @@ from qgis.core import QgsProject, Qgis, QgsMapLayerType, QgsMapLayer,QgsMapLayer
 # Import the code for the DockWidget
 from .qgisSpectre_dockwidget import qgisSpectreDockWidget
 import os.path
-
+import math 
 
 class qgisSpectre:
     """QGIS Plugin Implementation."""
@@ -233,8 +233,18 @@ class qgisSpectre:
         # TODO: Add only if array field, but c.f the idea on using comma-separated numbers
     #    self.dlg.cbItem.addItems(fields) #Added to the comboBox
     
-    def drawspectra(self,dataset):
+    def drawspectra(self):
         # Drawing the spectra on the graphicsstage
+        logscale=self.dlg.cbLog.isChecked()
+        if logscale:
+            dataset=[]
+            for n in self.view.spectreval:
+                if n==0:
+                    n=0.9
+                dataset.append(math.log(n))
+        else:
+            dataset=self.view.spectreval
+        self.spectre=dataset    
         #DONE: Add x and y axis
         #DONE: Add scale factors to scale x axis from channel number to keV
         #TODO: Add settings to have custom unit
@@ -244,7 +254,6 @@ class qgisSpectre:
         #TODO: Select different types of 
         #TODO: Save as file 
         #DONE: export to clipboard
-        self.spectre=dataset    
         self.scene.h=300 # HEight of stage
         self.scene.clear()
         self.scene.crdtext=None
@@ -260,8 +269,8 @@ class qgisSpectre:
         # Need to scale it down if the total number of counts > height of plot
         # TODO: Customizable scale
         fact=1.0
-        if max(dataset) > h-bt-10:
-            fact=(h-bt-10)/max(dataset)
+        #if max(dataset) > h-bt-10:
+        fact=(h-bt-10)/max(dataset)
         prevch=0
         for ch in dataset:
             # DONE: Use another form of plot. Multiline?
@@ -309,7 +318,8 @@ class qgisSpectre:
                         sumspectre = spectre
                     else:
                         sumspectre = list( map(add, spectre, sumspectre))
-                self.drawspectra(sumspectre)
+                self.view.spectreval=sumspectre
+                self.drawspectra()
             else:
                 self.iface.messageBar().pushMessage(
                     "Error", "Use an array field",

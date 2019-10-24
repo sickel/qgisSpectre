@@ -34,14 +34,22 @@
     <item row="2" column="0">
      <layout class="QHBoxLayout" name="hlMain">
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout"/>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pBCopy">
-        <property name="text">
-         <string>Copy</string>
-        </property>
-       </widget>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QPushButton" name="pBCopy">
+          <property name="text">
+           <string>Copy</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="cbLog">
+          <property name="text">
+           <string>Log Scale</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
