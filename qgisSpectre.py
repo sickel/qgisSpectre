@@ -32,7 +32,7 @@ from .resources import *
 from operator import add # To add spectra
 
 from PyQt5 import QtCore,QtGui
-from qgis.core import QgsProject, Qgis, QgsMapLayerType, QgsMapLayer
+from qgis.core import QgsProject, Qgis, QgsMapLayerType, QgsMapLayer,QgsMapLayerProxyModel,QgsFieldProxyModel
 
 # Import the code for the DockWidget
 from .qgisSpectre_dockwidget import qgisSpectreDockWidget
@@ -183,8 +183,11 @@ class qgisSpectre:
         self.dlg=qgisSpectreDockWidget(self.iface.mainWindow())
         self.view.setParent(self.dlg) 
         self.dlg.hlMain.addWidget(self.view)
-        self.dlg.cbLayer.currentIndexChanged['QString'].connect(self.listfields)
-            
+        #self.dlg.cbLayer.currentIndexChanged['QString'].connect(self.listfields)
+        self.dlg.qgLayer.setFilters(QgsMapLayerProxyModel.VectorLayer)
+        self.dlg.qgField.setLayer(self.dlg.qgLayer.currentLayer())
+       # self.dlg.qgField.setFilters(QgsFieldProxyModel.Numeric)
+        self.dlg.qgLayer.layerChanged.connect(lambda: self.dlg.qgField.setLayer(self.dlg.qgLayer.currentLayer()))    
     #--------------------------------------------------------------------------
 
     def onClosePlugin(self):
@@ -218,17 +221,17 @@ class qgisSpectre:
         del self.toolbar
     
     
-    def listfields(self):
+    def listfields_delete(self):
         # When selecting a new layer. List fields for that layer
         self.dlg.cbItem.clear()
-        layername=self.dlg.cbLayer.currentText()
+        layername=self.dlg.qgLayer.currentText()
         layers = QgsProject.instance().mapLayersByName(layername) # list of layers with any name
         if len(layers)==0:
             return
         layer = layers[0] # first layer .
         fields = layer.fields().names() #Get Fiels
         # TODO: Add only if array field, but c.f the idea on using comma-separated numbers
-        self.dlg.cbItem.addItems(fields) #Added to the comboBox
+    #    self.dlg.cbItem.addItems(fields) #Added to the comboBox
     
     def drawspectra(self,dataset):
         # Drawing the spectra on the graphicsstage
@@ -281,7 +284,7 @@ class qgisSpectre:
         
     def findselected(self):
         # Is being run when points have been selected
-        layername=self.dlg.cbLayer.currentText()
+        layername=self.dlg.qgLayer.currentText()
         layers = QgsProject.instance().mapLayersByName(layername) # list of layers with selected name
         layer = layers[0] # first layer .
         #TODO: This is a kludge. More layers may have same name in qgis. By doing this, it is only possible 
@@ -292,7 +295,7 @@ class qgisSpectre:
             self.iface.messageBar().pushMessage(
                     "Drawing", "Selected {} points".format(str(n)),
                     level=Qgis.Success, duration=3)
-            fieldname=self.dlg.cbItem.currentText()
+            fieldname=self.dlg.qgField.currentText()
             # TODO: Rewrite to make it possible to read in a spectra as a string of comma-separated numbers
             if isinstance(sels[0][fieldname],list):
                 sumspectre = None
@@ -341,13 +344,13 @@ class qgisSpectre:
             # Listing layers
             # TODO: Only list vector layers
             # TODO: Repopulate when layers are added or removed
-            layers = QgsProject.instance().layerTreeRoot().children()
-            self.dlg.cbLayer.clear()
-            for layer in layers:
+            #layers = QgsProject.instance().layerTreeRoot().children()
+            #self.dlg.cbLayer.clear()
+            #for layer in layers:
                 #if layer.layer().type==QgsMapLayerType.VectorLayer:
-                   self.dlg.cbLayer.addItem(layer.name())
+            #       self.dlg.cbLayer.addItem(layer.name())
             #self.dlg.cbLayer.addItems([layer.name() for layer in layers])
-            self.listfields()
+            #self.listfields()
             self.dlg.pBCopy.clicked.connect(self.spectreToClipboard)
             #Boilerplate below:
             
@@ -358,7 +361,7 @@ class qgisSpectre:
             # TODO: fix to allow choice of dock location
             self.iface.mainWindow().addDockWidget(Qt.BottomDockWidgetArea, self.dlg)
             self.dlg.show()
-
+            self.findselected()
 
 class MouseReadGraphicsView(QGraphicsView):
     def __init__(self, iface):
