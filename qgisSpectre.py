@@ -71,7 +71,6 @@ class qgisSpectre:
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&Spectre Viewer')
-        # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'qgisSpectre')
         self.toolbar.setObjectName(u'qgisSpectre')
 
@@ -182,7 +181,7 @@ class qgisSpectre:
             callback=self.run,
             parent=self.iface.mainWindow())
         self.dlg=qgisSpectreDockWidget(self.iface.mainWindow())
-        self.view.setParent(self.dlg) # Adding in customized QGraphicsView
+        self.view.setParent(self.dlg) 
         self.dlg.hlMain.addWidget(self.view)
         self.dlg.cbLayer.currentIndexChanged['QString'].connect(self.listfields)
             
