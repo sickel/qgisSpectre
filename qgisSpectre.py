@@ -220,21 +220,8 @@ class qgisSpectre:
         # remove the toolbar
         del self.toolbar
     
-    
-    def listfields_delete(self):
-        # When selecting a new layer. List fields for that layer
-        self.dlg.cbItem.clear()
-        layername=self.dlg.qgLayer.currentText()
-        layers = QgsProject.instance().mapLayersByName(layername) # list of layers with any name
-        if len(layers)==0:
-            return
-        layer = layers[0] # first layer .
-        fields = layer.fields().names() #Get Fiels
-        # TODO: Add only if array field, but c.f the idea on using comma-separated numbers
-    #    self.dlg.cbItem.addItems(fields) #Added to the comboBox
-    
     def drawspectra(self):
-        # Drawing the spectra on the graphicsstage
+        """ Drawing the spectra on the graphicsstage """
         logscale=self.dlg.cbLog.isChecked()
         if logscale:
             dataset=[]
@@ -292,12 +279,8 @@ class qgisSpectre:
         
         
     def findselected(self):
-        # Is being run when points have been selected
-        layername=self.dlg.qgLayer.currentText()
-        layers = QgsProject.instance().mapLayersByName(layername) # list of layers with selected name
-        layer = layers[0] # first layer .
-        #TODO: This is a kludge. More layers may have same name in qgis. By doing this, it is only possible 
-        #      to plot spectra from the first layer if more have the same name 
+        """ Is being run when points have been selected. Makes a sum spectra from selected points"""
+        layer=self.dlg.qgLayer.currentLayer()
         sels=layer.selectedFeatures() # The selected features in the active (from this plugin's point of view) layer
         n=len(sels)
         if n>0:
@@ -342,14 +325,15 @@ class qgisSpectre:
             # The three former to be user-settable
             self.spectre=[]
             # Setting the scene to plot spectra
-            self.unit='Ch'
             self.scene=QGraphicsScene()
             self.scene.crdtext=None
             self.scene.markerline=None
             self.scene.acalib=3.038
             self.scene.bcalib=-6.365
+            self.unit='keV'
             showch=False
             if showch:
+                self.unit='Ch'
                 self.scene.acalib=1
                 self.scene.bcalib=0
             self.view.setScene(self.scene)
@@ -360,15 +344,9 @@ class qgisSpectre:
             # Listing layers
             # TODO: Only list vector layers
             # TODO: Repopulate when layers are added or removed
-            #layers = QgsProject.instance().layerTreeRoot().children()
-            #self.dlg.cbLayer.clear()
-            #for layer in layers:
-                #if layer.layer().type==QgsMapLayerType.VectorLayer:
-            #       self.dlg.cbLayer.addItem(layer.name())
-            #self.dlg.cbLayer.addItems([layer.name() for layer in layers])
-            #self.listfields()
+            # DONE both by using qgisWidget
             self.dlg.pBCopy.clicked.connect(self.spectreToClipboard)
-            #Boilerplate below:
+            
             
             # connect to provide cleanup on closing of dockwidget
             self.dlg.closingPlugin.connect(self.onClosePlugin)
