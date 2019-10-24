@@ -297,6 +297,8 @@ class qgisSpectre:
                     level=Qgis.Success, duration=3)
             fieldname=self.dlg.qgField.currentText()
             # TODO: Rewrite to make it possible to read in a spectra as a string of comma-separated numbers
+            if fieldname=='' or fieldname== None:
+                return # Invalid fieldname, probably not selected yet
             if isinstance(sels[0][fieldname],list):
                 sumspectre = None
                 for sel in sels:
@@ -334,8 +336,12 @@ class qgisSpectre:
             self.scene=QGraphicsScene()
             self.scene.crdtext=None
             self.scene.markerline=None
-            self.scene.acalib=2.75
-            self.scene.bcalib=0
+            self.scene.acalib=3.038
+            self.scene.bcalib=-6.365
+            showch=False
+            if showch:
+                self.scene.acalib=1
+                self.scene.bcalib=0
             self.view.setScene(self.scene)
             self.scene.setSceneRect(0,0,1200,300)
             # Relisting field when new layer is selected:
