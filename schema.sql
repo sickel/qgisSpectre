@@ -16,4 +16,5 @@ CREATE TABLE public.measure (
     temperature numeric,
     linenumber integer,
     filename character varying,
+    mission character varying
 );
