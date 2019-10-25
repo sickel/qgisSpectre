@@ -13,6 +13,12 @@ To use this:
 
 Spectra data from other systems may also be used. Use readdata.py as a template for writing a new import function.
 
+There is a testdataset available in the test subdirectory. It can be unzipped and imported into a postgis enabled postgres database. Open it in qgis, select the testdata table and the field spectra.
+
+To import:
+gunzip postgis.sql.gz
+psql <database> < postgis.sql
+
 
 See also:
 
