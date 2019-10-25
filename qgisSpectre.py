@@ -359,6 +359,7 @@ class qgisSpectre:
             self.dlg.show()
             self.dlg.cbLog.stateChanged.connect(self.findselected)
             self.dlg.qgField.currentIndexChanged['QString'].connect(self.findselected)
+            self.dlg.qgLayer.currentIndexChanged['QString'].connect(self.findselected)
             self.findselected()
 
 class MouseReadGraphicsView(QGraphicsView):
