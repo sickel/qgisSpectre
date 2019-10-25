@@ -30,7 +30,7 @@ The energycalibration is presently hardcoded, look for the values acalib and bca
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 import qgis.PyQt.QtCore
-from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon, QImage, QPainter
 from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication,QGraphicsView,QCheckBox
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -358,6 +358,7 @@ class qgisSpectre:
             self.iface.mainWindow().addDockWidget(Qt.BottomDockWidgetArea, self.dlg)
             self.dlg.show()
             self.dlg.cbLog.stateChanged.connect(self.findselected)
+            self.dlg.qgField.currentIndexChanged['QString'].connect(self.findselected)
             self.findselected()
 
 class MouseReadGraphicsView(QGraphicsView):
@@ -382,30 +383,50 @@ class MouseReadGraphicsView(QGraphicsView):
         message="{} keV (n={})".format(int(energy),self.spectreval[int(ch)])
         if self.scene().crdtext!=None:
             self.scene().removeItem(self.scene().crdtext)
-        self.scene().crdtext=self.scene().addText(message)
-        self.scene().crdtext.setPos(x,10)
         if self.scene().markerline!=None:
             self.scene().removeItem(self.scene().markerline)
+        self.scene().crdtext=self.scene().addText(message)
+        self.scene().crdtext.setPos(x,10)
         self.scene().markerline=self.scene().addLine(x,0,x,300-(scene.bottom+5))
     
     def keyPressEvent(self,event):
         ### Reads key presses to move marker line """
         #TODO: Use proper key constants
-        if event.key()==16777236: #right arrowkey
+        if event.key()==Qt.Key_Right: #16777236: #right arrowkey
             self.linex+=1
-        if event.key()==16777234: # left arrowkey
+        if event.key()==Qt.Key_Left: #16777234: # left arrowkey
             self.linex-=1
-        if event.key()==16777235: # up arrow
+        if event.key()==Qt.Key_Up: #16777235: # up arrow
             self.linex+=10
-        if event.key()==16777237: # down arrow
+        if event.key()==Qt.Key_Down: #16777237: # down arrow
             self.linex-=10
-        if self.linex> self.scene().end:
-            self.linex=self.scene().end
-        if self.linex< self.scene().left:
-            self.linex=self.scene().left
-
+        self.linex=max(self.scene().left,self.linex)
+        self.linex=min(self.scene().end,self.linex)
         self.drawline()
-    
+        if event.key()==Qt.Key_Escape: # To  be set to Esc 
+            if self.scene().crdtext!=None:
+                self.scene().removeItem(self.scene().crdtext)
+            if self.scene().markerline!=None:
+                self.scene().removeItem(self.scene().markerline)
+        if event.key()==Qt.Key_Space:
+            self._save_image()
+        
+    def _save_image(self):
+        return # Crashing qgis for the time being...
+        # Get region of scene to capture from somewhere.
+        area = self.scene().sceneRect()
+
+        # Create a QImage to render to and fix up a QPainter for it.
+        image = QImage(area.width(),area.height(), QImage.Format_ARGB32_Premultiplied)
+        painter = QPainter(image)
+
+        # Render the region of interest to the QImage.
+        self.scene().render(painter, image, area)
+        painter.end()
+
+        # Save the image to a file.
+        image.save("capture.png")
+        
     def mousePressEvent(self, event):
         """ Press the left mouse button to draw a line and print the energy at the point"""
         
