@@ -187,7 +187,7 @@ class qgisSpectre:
         self.dlg.qgLayer.setFilters(QgsMapLayerProxyModel.VectorLayer)
         self.dlg.qgField.setLayer(self.dlg.qgLayer.currentLayer())
        # self.dlg.qgField.setFilters(QgsFieldProxyModel.Numeric)
-        self.dlg.qgLayer.layerChanged.connect(lambda: self.dlg.qgField.setLayer(self.dlg.qgLayer.currentLayer()))    
+        self.dlg.qgLayer.layerChanged.connect(lambda: self.dlg.qgField.setLayer(self.dlg.qgLayer.currentLayer()))   
     #--------------------------------------------------------------------------
 
     def onClosePlugin(self):
@@ -231,17 +231,18 @@ class qgisSpectre:
                 dataset.append(math.log(n))
         else:
             dataset=self.view.spectreval
-        self.spectre=dataset    
         #DONE: Add x and y axis
         #DONE: Add scale factors to scale x axis from channel number to keV
         #TODO: Add settings to have custom unit
         #TODO: Custom scales
-        #TODO: Possibly keep spectra
+        #TODO: Keep spectra to compare
         #DONE: Draw spectra as line, not "line-histogram"
         #TODO: Select different types of 
         #TODO: Save as file 
-        #DONE: export to clipboard
-        self.scene.h=300 # HEight of stage
+        #DONE: export data to clipboard
+        #TODO: export image to clipboard
+        #TODO: Peak detection
+        self.scene.h=300 # Height of stage
         self.scene.clear()
         self.scene.crdtext=None
         self.scene.markerline=None
@@ -253,19 +254,18 @@ class qgisSpectre:
         h=self.scene.h
         self.scene.addLine(float(n-1),float(h-bt),float(n-1),10.0) # Y-axis
         self.scene.addLine(float(n-1),float(h-bt-1),float(len(dataset)+10),float(h-bt-1)) # X-axis
-        # Need to scale it down if the total number of counts > height of plot
-        # TODO: Customizable scale
+        # Scales the spectra to fit with the size of the graphicsview
         fact=1.0
-        #if max(dataset) > h-bt-10:
         fact=(h-bt-10)/max(dataset)
         prevch=0
         for ch in dataset:
-            # DONE: Use another form of plot. Multiline?
+            # TODO: User selectable type of plot
        #     self.scene.addLine(float(n),float(h-bt),float(n),(h-bt-fact*ch))
        #     self.scene.addLine(float(n),float(h-(bt+4)-fact*ch),float(n),(h-bt-fact*ch))
             self.scene.addLine(float(n),float(h-bt-fact*prevch),float(n+1),(h-bt-fact*ch))
             prevch=ch
             n+=1
+        self.scene.end=n-1
         tickval=self.tickinterval
         left=self.scene.left
         while tickval < self.scene.acalib*n+self.scene.bcalib:
@@ -275,7 +275,7 @@ class qgisSpectre:
             text.setPos(tickch+left-40, 280)
             tickval+=self.tickinterval
         text=self.scene.addText(self.unit)
-        text.setPos(n+50, 280)
+        text.setPos(self.scene.end+15,280)
         
         
     def findselected(self):
@@ -285,13 +285,14 @@ class qgisSpectre:
         n=len(sels)
         if n>0:
             self.iface.messageBar().pushMessage(
-                    "Drawing", "Selected {} points".format(str(n)),
+                    "Drawing spectra", "Integrated over {} measurements".format(str(n)),
                     level=Qgis.Success, duration=3)
             fieldname=self.dlg.qgField.currentText()
             # TODO: Rewrite to make it possible to read in a spectra as a string of comma-separated numbers
             if fieldname=='' or fieldname== None:
                 return # Invalid fieldname, probably not selected yet
             if isinstance(sels[0][fieldname],list):
+                # Only draw if a list field is selected
                 sumspectre = None
                 for sel in sels:
                     spectre=sel[fieldname]
@@ -307,75 +308,83 @@ class qgisSpectre:
                 self.iface.messageBar().pushMessage(
                     "Error", "Use an array field",
                     level=Qgis.Success, duration=3)
-                
+                    
     def spectreToClipboard(self):
+        """ Copies the channel values to the clipboard as a comma separated string"""
         clipboard = QApplication.clipboard()
-        text=",".join(str(x) for x in self.spectre)
+        text=",".join(str(x) for x in self.view.spectreval)
         clipboard.setText(text)
+        
+        # TODO: Make a graphical copy
         
     def run(self):
         """Run method that loads and starts the plugin"""
 
         if not self.pluginIsActive:
             self.pluginIsActive = True
-
-            #print "** STARTING qgisSpectre"
-
-            self.tickinterval=100
-            # The three former to be user-settable
-            self.spectre=[]
-            # Setting the scene to plot spectra
             self.scene=QGraphicsScene()
+            # Storing the spectra to be able to read out values later on
+            # Setting the values storing line and text shown when the mouse button is clicked
             self.scene.crdtext=None
             self.scene.markerline=None
+            self.scene.left=None
+            # TODO: The four next settings to be user-settable
+            self.tickinterval=100
             self.scene.acalib=3.038
             self.scene.bcalib=-6.365
             self.unit='keV'
-            showch=False
+            showch=False # Set to True to show channel values
             if showch:
                 self.unit='Ch'
                 self.scene.acalib=1
                 self.scene.bcalib=0
             self.view.setScene(self.scene)
             self.scene.setSceneRect(0,0,1200,300)
-            # Relisting field when new layer is selected:
             # Replotting spectre when a new selection is made
             self.iface.mapCanvas().selectionChanged.connect(self.findselected)        
             # Listing layers
-            # TODO: Only list vector layers
-            # TODO: Repopulate when layers are added or removed
+            # DONE: Only list vector layers
+            # DONE: Repopulate when layers are added or removed
             # DONE both by using qgisWidget
             self.dlg.pBCopy.clicked.connect(self.spectreToClipboard)
-            
-            
             # connect to provide cleanup on closing of dockwidget
             self.dlg.closingPlugin.connect(self.onClosePlugin)
-
             # show the dockwidget
-            # TODO: fix to allow choice of dock location
             self.iface.mainWindow().addDockWidget(Qt.BottomDockWidgetArea, self.dlg)
             self.dlg.show()
+            self.dlg.cbLog.stateChanged.connect(self.findselected)
             self.findselected()
 
 class MouseReadGraphicsView(QGraphicsView):
+    """ A class based on QGraphicsView to enable capture of mouse events"""
+    
     def __init__(self, iface):
         self.iface = iface
         QGraphicsView.__init__(self)
-        
+    #TODO: Use arrowkeys to move marker up and down in spectra
         
         
     def mousePressEvent(self, event):
+        """ Press the left mouse button to draw a line and print the energy at the point"""
+        #TODO: Show n at line
+        #TODO: Show list of nuclides with peak at actual energy
+        #      Maybe as a further extention as this is radionuclide specific.
         if event.button() == 1:
+            if self.scene().left == None: # Not yet initialized
+                return
+            scene=self.scene()
             coords=self.mapToScene(event.pos())    
             x = coords.x()
-            if x != None:
-                energy=(x-self.scene().left)*self.scene().acalib+self.scene().bcalib
+            # Make sure the data not is read out when being outside the spectra
+            if x != None and x > self.scene().left and x < self.scene().end:
+                ch=x-self.scene().left
+                energy=ch*scene.acalib+scene.bcalib
                 # DONE: draw a vertical line where clicked. Mark energy
-                coords=str(int(energy))+" keV"
+                message="{} keV (n={})".format(int(energy),self.spectreval[int(ch)])
                 if self.scene().crdtext!=None:
                     self.scene().removeItem(self.scene().crdtext)
-                self.scene().crdtext=self.scene().addText(coords)
+                self.scene().crdtext=self.scene().addText(message)
                 self.scene().crdtext.setPos(x,10)
                 if self.scene().markerline!=None:
                     self.scene().removeItem(self.scene().markerline)
-                self.scene().markerline=self.scene().addLine(x,0,x,300)
+                self.scene().markerline=self.scene().addLine(x,0,x,300-(scene.bottom+3))
