@@ -366,11 +366,16 @@ class MouseReadGraphicsView(QGraphicsView):
     def __init__(self, iface):
         self.iface = iface
         QGraphicsView.__init__(self)
+        self.linex=0
     #TODO: Use arrowkeys to move marker up and down in spectra
         
     
-    def drawline(self,x):
+    def drawline(self):
+        """ Prints a marker line and reads out energy and number of counts"""
+        #TODO: Show list of nuclides with peak at actual energy
+        #      Maybe as a further extention as this is radionuclide specific.
         scene=self.scene()
+        x=self.linex
         ch=x-scene.left
         energy=ch*scene.acalib+scene.bcalib
         # DONE: draw a vertical line where clicked. Mark energy
@@ -381,19 +386,36 @@ class MouseReadGraphicsView(QGraphicsView):
         self.scene().crdtext.setPos(x,10)
         if self.scene().markerline!=None:
             self.scene().removeItem(self.scene().markerline)
-        self.scene().markerline=self.scene().addLine(x,0,x,300-(scene.bottom+3))
+        self.scene().markerline=self.scene().addLine(x,0,x,300-(scene.bottom+5))
+    
+    def keyPressEvent(self,event):
+        ### Reads key presses to move marker line """
+        #TODO: Use proper key constants
+        if event.key()==16777236: #right arrowkey
+            self.linex+=1
+        if event.key()==16777234: # left arrowkey
+            self.linex-=1
+        if event.key()==16777235: # up arrow
+            self.linex+=10
+        if event.key()==16777237: # down arrow
+            self.linex-=10
+        if self.linex> self.scene().end:
+            self.linex=self.scene().end
+        if self.linex< self.scene().left:
+            self.linex=self.scene().left
+
+        self.drawline()
     
     def mousePressEvent(self, event):
         """ Press the left mouse button to draw a line and print the energy at the point"""
         
         #DONE: Show n at line
-        #TODO: Show list of nuclides with peak at actual energy
-        #      Maybe as a further extention as this is radionuclide specific.
         if event.button() == 1:
             if self.scene().left == None: # Not yet initialized
                 return
             coords=self.mapToScene(event.pos())    
             x = coords.x()
+            self.linex=x
             # Make sure the data not is read out when being outside the spectra
             if x != None and x > self.scene().left and x < self.scene().end:
-                self.drawline(x)
+                self.drawline()
