@@ -5,9 +5,10 @@
 [general]
 name=Spectre Viewer
 qgisMinimumVersion=3.0
-description=View spectra stored in a geodataset. The spectral data must be stored in an array, e.g. as an postgres array datafield. When features in the dataset are selected, the integrated spectra over these features will be displayed. 
+description=View spectra stored in a geodataset. The spectral data must be stored in an array, e.g. as an postgres array 
+or as a comma separated string. When features in the dataset are selected, the integrated spectra over these features will be displayed. 
 The energycalibration is presently hardcoded, look for the values acalib and bcalib. (Energy=acalib*channel + bcalib)
-version=0.4
+version=0.5
 author=Morten Sickel
 email=morten@sickel.net
 
