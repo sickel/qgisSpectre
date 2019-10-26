@@ -296,11 +296,16 @@ class qgisSpectre:
             # TODO: Rewrite to make it possible to read in a spectra as a string of comma-separated numbers
             if fieldname=='' or fieldname== None:
                 return # Invalid fieldname, probably not selected yet
-            if isinstance(sels[0][fieldname],list):
+            stringspec = isinstance(sels[0][fieldname],str)
+            stringspec = stringspec and (sels[0][fieldname].find(',') != -1)
+            if isinstance(sels[0][fieldname],list) or stringspec:
                 # Only draw if a list field is selected
                 sumspectre = None
                 for sel in sels:
                     spectre=sel[fieldname]
+                    if stringspec:
+                        vals=spectre.split(',')
+                        spectre = list(map(int, vals))
                     del spectre[-1] # To get rid of last channel i.e. cosmic from RSI-spectra
                                     # TODO: customable removal of channels at top and/or bottom
                     if sumspectre == None:
@@ -311,7 +316,7 @@ class qgisSpectre:
                 self.drawspectra()
             else:
                 self.iface.messageBar().pushMessage(
-                    "Error", "Use an array field",
+                    "Error", "Use an array field or a comma separated string",
                     level=Qgis.Success, duration=3)
                     
     def spectreToClipboard(self):
