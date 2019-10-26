@@ -35,9 +35,6 @@ Selected TODOs:
 - Save spectra to PNG
 - Show more specra simultaneously
 - Use a custom scale on the y-axis
-- Show specra in log scale
-- Only list vector layers in the layer selector
 - List only relevant (i.e. array) columns in the column selector
 - Allow spectra being stored as comma separated numbers (and adjust point above accordingly)
-- Find out how to handle several layers with same name
 
