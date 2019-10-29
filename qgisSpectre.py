@@ -76,8 +76,8 @@ class qgisSpectre:
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&Spectre Viewer')
-        self.toolbar = self.iface.addToolBar(u'qgisSpectre')
-        self.toolbar.setObjectName(u'qgisSpectre')
+        self.toolbar = self.iface.addToolBar(u'Spectre viewer')
+        self.toolbar.setObjectName(u'Spectre viewer')
 
 
         self.view = MouseReadGraphicsView(self.iface)
@@ -281,17 +281,21 @@ class qgisSpectre:
             tickval+=self.tickinterval
         text=self.scene.addText(self.unit)
         text.setPos(self.scene.end+15,280)
+        ntext=self.scene.addText("n = {}".format(str(self.view.n)))
+        ntext.setPos(self.scene.end+50,1)
         
         
     def findselected(self):
         """ Is being run when points have been selected. Makes a sum spectra from selected points"""
         layer=self.dlg.qgLayer.currentLayer()
+        if layer==None:
+            return # Happens some times, just as well to return
         sels=layer.selectedFeatures() # The selected features in the active (from this plugin's point of view) layer
         n=len(sels)
         if n>0:
-            self.iface.messageBar().pushMessage(
-                    "Drawing spectra", "Integrated over {} measurements".format(str(n)),
-                    level=Qgis.Success, duration=3)
+            #self.iface.messageBar().pushMessage(
+            #        "Drawing spectra", "Integrated over {} measurements".format(str(n)),
+            #        level=Qgis.Success, duration=3)
             fieldname=self.dlg.qgField.currentText()
             # TODO: Rewrite to make it possible to read in a spectra as a string of comma-separated numbers
             if fieldname=='' or fieldname== None:
@@ -313,6 +317,7 @@ class qgisSpectre:
                     else:
                         sumspectre = list( map(add, spectre, sumspectre))
                 self.view.spectreval=sumspectre
+                self.view.n=n
                 self.drawspectra()
             else:
                 self.iface.messageBar().pushMessage(
@@ -392,7 +397,7 @@ class MouseReadGraphicsView(QGraphicsView):
         if self.scene().markerline!=None:
             self.scene().removeItem(self.scene().markerline)
         self.scene().crdtext=self.scene().addText(message)
-        self.scene().crdtext.setPos(x,10)
+        self.scene().crdtext.setPos(x,20)
         self.scene().markerline=self.scene().addLine(x,0,x,300-(scene.bottom+5))
     
     def keyPressEvent(self,event):
@@ -414,24 +419,33 @@ class MouseReadGraphicsView(QGraphicsView):
                 self.scene().removeItem(self.scene().crdtext)
             if self.scene().markerline!=None:
                 self.scene().removeItem(self.scene().markerline)
-        if event.key()==Qt.Key_Space:
-            self._save_image()
+        # Does not work, crashes
+        #if event.key()==Qt.Key_Space:
+        #    self._save_image()
         
     def _save_image(self):
-        return # Crashing qgis for the time being...
+        self.iface.messageBar().pushMessage(
+                    "Info", "Saving image",
+                    level=Qgis.Info, duration=3)
+                
+        #return # Crashing qgis for the time being...
         # Get region of scene to capture from somewhere.
         area = self.scene().sceneRect()
 
         # Create a QImage to render to and fix up a QPainter for it.
-        image = QImage(area.width(),area.height(), QImage.Format_ARGB32_Premultiplied)
-        painter = QPainter(image)
+        # image = QImage(area.width(),area.height(), QImage.Format_ARGB32_Premultiplied)
+        
+        
+        # This does not work
+        # Crashes qgis
+        # painter = QPainter(image)
 
         # Render the region of interest to the QImage.
-        self.scene().render(painter, image, area)
-        painter.end()
+        #self.scene().render(painter, image, area)
+        #painter.end()
 
         # Save the image to a file.
-        image.save("capture.png")
+        #image.save("capture.png")
         
     def mousePressEvent(self, event):
         """ Press the left mouse button to draw a line and print the energy at the point"""
