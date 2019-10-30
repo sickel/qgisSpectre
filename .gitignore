@@ -3,3 +3,5 @@
 help/build
 *autosave
 *.kate-swp
+test/postgis.sql
+test/testdata.gpkg

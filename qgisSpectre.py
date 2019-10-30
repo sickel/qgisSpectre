@@ -433,19 +433,19 @@ class MouseReadGraphicsView(QGraphicsView):
         area = self.scene().sceneRect()
 
         # Create a QImage to render to and fix up a QPainter for it.
-        # image = QImage(area.width(),area.height(), QImage.Format_ARGB32_Premultiplied)
+        image = QImage(area.width(),area.height(), QImage.Format_ARGB32_Premultiplied)
         
         
         # This does not work
         # Crashes qgis
-        # painter = QPainter(image)
+        painter = QPainter(image)
 
         # Render the region of interest to the QImage.
-        #self.scene().render(painter, image, area)
-        #painter.end()
+        self.scene().render(painter, image, area)
+        painter.end()
 
         # Save the image to a file.
-        #image.save("capture.png")
+        image.save("capture.png")
         
     def mousePressEvent(self, event):
         """ Press the left mouse button to draw a line and print the energy at the point"""

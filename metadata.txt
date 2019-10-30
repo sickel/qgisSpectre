@@ -1,49 +1,37 @@
 # This file contains metadata for your plugin.
-
+ 
 # This file should be included when you package your plugin.# Mandatory items:
-
+ 
 [general]
 name=Spectre Viewer
 qgisMinimumVersion=3.0
-description=View spectra stored in a geodataset. The spectral data must be stored in an array, e.g. as an postgres array 
-or as a comma separated string. When features in the dataset are selected, the integrated spectra over these features will be displayed. 
+description=View spectra stored in a geodataset. The spectral data must be stored in an array, e.g. as an postgres array datafield or as a comma separated string. When features in the dataset are selected, the integrated spectra over these features will be displayed. Click in spectra to read out values. Use arrowkeys to move.
 The energycalibration is presently hardcoded, look for the values acalib and bcalib. (Energy=acalib*channel + bcalib)
 version=0.5
 author=Morten Sickel
 email=morten@sickel.net
-
+ 
 about=View spectra stored in a geodataset. 
-
+ 
 tracker=https://github.com/sickel/qgisSpectre/issues
 repository=https://github.com/sickel/qgisSpectre
 # End of mandatory metadata
-
+ 
 Recommended items: Stripchart
-
+ 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 # changelog=
-
+ 
 # Tags are comma separated with spaces allowed
 tags=python
-
+ 
 homepage=https://github.com/sickel/qgisSpectre
 category=Database
 icon=icon.png
 # experimental flag
 experimental=True
-
+ 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False
-
-# Since QGIS 3.8, a comma separated list of plugins to be installed
-# (or upgraded) can be specified.
-# Check the documentation for more information.
-# plugin_dependencies=
-
-Category of the plugin: Raster, Vector, Database or Web
-# category=
-
-# If the plugin can run on QGIS Server.
-server=False
-
+ 
