@@ -43,6 +43,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="pBSave">
+          <property name="text">
+           <string>Save</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QCheckBox" name="cbLog">
           <property name="text">
            <string>Log Scale</string>

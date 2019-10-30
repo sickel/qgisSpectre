@@ -31,14 +31,15 @@ The energycalibration is presently hardcoded, look for the values acalib and bca
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 import qgis.PyQt.QtCore
 from qgis.PyQt.QtGui import QIcon, QImage, QPainter
-from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication,QGraphicsView,QCheckBox
+from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication,QGraphicsView,QCheckBox, QFileDialog
+from PyQt5.QtGui import QIcon
 # Initialize Qt resources from file resources.py
 from .resources import *
 from operator import add # To add spectra
 
 from PyQt5 import QtCore,QtGui
 from qgis.core import QgsProject, Qgis, QgsMapLayerType, QgsMapLayer,QgsMapLayerProxyModel,QgsFieldProxyModel
-
+from qgis.PyQt.QtGui import QPen, QBrush
 # Import the code for the DockWidget
 from .qgisSpectre_dockwidget import qgisSpectreDockWidget
 import os.path
@@ -251,7 +252,9 @@ class qgisSpectre:
         self.scene.clear()
         self.scene.crdtext=None
         self.scene.markerline=None
-        self.scene.addRect(0,0,1200,300)
+        backgroundbrush=QBrush(Qt.white)
+        outlinepen=QPen(Qt.white)
+        self.scene.addRect(0,0,1200,300,outlinepen,backgroundbrush)
         self.scene.bottom=20 # Bottom clearing (for x tick marks and labels)
         self.scene.left=self.scene.bottom # Left clearing (for y tick marks and labels)
         n=self.scene.left
@@ -322,7 +325,7 @@ class qgisSpectre:
             else:
                 self.iface.messageBar().pushMessage(
                     "Error", "Use an array field or a comma separated string",
-                    level=Qgis.Success, duration=3)
+                    level=Qgis.Warning, duration=3)
                     
     def spectreToClipboard(self):
         """ Copies the channel values to the clipboard as a comma separated string"""
@@ -362,6 +365,8 @@ class qgisSpectre:
             # DONE: Repopulate when layers are added or removed
             # DONE both by using qgisWidget
             self.dlg.pBCopy.clicked.connect(self.spectreToClipboard)
+            self.dlg.pBSave.clicked.connect(self.view.saveImage)
+            
             # connect to provide cleanup on closing of dockwidget
             self.dlg.closingPlugin.connect(self.onClosePlugin)
             # show the dockwidget
@@ -403,6 +408,9 @@ class MouseReadGraphicsView(QGraphicsView):
     def keyPressEvent(self,event):
         ### Reads key presses to move marker line """
         #TODO: Use proper key constants
+        if event.key()==Qt.Key_Space:
+            self.saveImage()
+            return
         if event.key()==Qt.Key_Right: #16777236: #right arrowkey
             self.linex+=1
         if event.key()==Qt.Key_Left: #16777234: # left arrowkey
@@ -419,33 +427,23 @@ class MouseReadGraphicsView(QGraphicsView):
                 self.scene().removeItem(self.scene().crdtext)
             if self.scene().markerline!=None:
                 self.scene().removeItem(self.scene().markerline)
-        # Does not work, crashes
-        #if event.key()==Qt.Key_Space:
-        #    self._save_image()
         
-    def _save_image(self):
-        self.iface.messageBar().pushMessage(
-                    "Info", "Saving image",
-                    level=Qgis.Info, duration=3)
-                
-        #return # Crashing qgis for the time being...
+    def saveImage(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()","","Image files (*.png);;All Files (*)", options=options)
+        if not fileName:
+            return
         # Get region of scene to capture from somewhere.
         area = self.scene().sceneRect()
-
         # Create a QImage to render to and fix up a QPainter for it.
         image = QImage(area.width(),area.height(), QImage.Format_ARGB32_Premultiplied)
-        
-        
-        # This does not work
-        # Crashes qgis
         painter = QPainter(image)
-
         # Render the region of interest to the QImage.
-        self.scene().render(painter, image, area)
+        self.scene().render(painter)
         painter.end()
-
         # Save the image to a file.
-        image.save("capture.png")
+        image.save(fileName)
         
     def mousePressEvent(self, event):
         """ Press the left mouse button to draw a line and print the energy at the point"""
