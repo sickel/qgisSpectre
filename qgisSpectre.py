@@ -287,6 +287,12 @@ class qgisSpectre:
         ntext=self.scene.addText("n = {}".format(str(self.view.n)))
         ntext.setPos(self.scene.end+50,1)
         
+    def updatea(self):
+        self.scene.acalib=float(self.dlg.leA.text())
+
+
+    def updateb(self):
+        self.scene.bcalib=float(self.dlg.leB.text())
         
     def findselected(self):
         """ Is being run when points have been selected. Makes a sum spectra from selected points"""
@@ -350,6 +356,8 @@ class qgisSpectre:
             self.tickinterval=100
             self.scene.acalib=3.038
             self.scene.bcalib=-6.365
+            self.dlg.leA.setText(str(self.scene.acalib))
+            self.dlg.leB.setText(str(self.scene.bcalib))
             self.unit='keV'
             showch=False # Set to True to show channel values
             if showch:
@@ -375,8 +383,11 @@ class qgisSpectre:
             self.dlg.cbLog.stateChanged.connect(self.findselected)
             self.dlg.qgField.currentIndexChanged['QString'].connect(self.findselected)
             self.dlg.qgLayer.currentIndexChanged['QString'].connect(self.findselected)
+            self.dlg.leA.textChanged['QString'].connect(self.updatea)
+            self.dlg.leB.textChanged['QString'].connect(self.updateb)
             self.findselected()
-
+            
+                
 class MouseReadGraphicsView(QGraphicsView):
     """ A class based on QGraphicsView to enable capture of mouse events"""
     
@@ -394,6 +405,7 @@ class MouseReadGraphicsView(QGraphicsView):
         scene=self.scene()
         x=self.linex
         ch=x-scene.left
+        
         energy=ch*scene.acalib+scene.bcalib
         # DONE: draw a vertical line where clicked. Mark energy
         message="{} keV (n={})".format(int(energy),self.spectreval[int(ch)])
