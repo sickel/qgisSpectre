@@ -56,6 +56,42 @@
           </property>
          </widget>
         </item>
+        <item>
+            <widget class="QLabel" name="label">
+            <property name="text">
+                <string>Calibration coefficients : y=A*ch+B</string>
+            </property>
+            </widget>
+    
+        </item>
+        <item>
+        <layout class="QHBoxLayout" name="hlMain">
+            <item>
+            <widget class="QLabel" name="label">
+            <property name="text">
+                <string>A: </string>
+            </property>
+            </widget>
+    
+        </item>
+        <item>
+                <widget class="QLineEdit" name="leA">
+            </widget>
+            </item>
+            <item>
+            <widget class="QLabel" name="label">
+            <property name="text">
+                <string>B: </string>
+            </property>
+            </widget>
+    
+        </item>
+            <item>
+                <widget class="QLineEdit" name="leB">
+            </widget>
+            </item>
+        </layout>
+        </item>
        </layout>
       </item>
      </layout>
