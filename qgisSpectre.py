@@ -44,6 +44,7 @@ from qgis.PyQt.QtGui import QPen, QBrush
 from .qgisSpectre_dockwidget import qgisSpectreDockWidget
 import os.path
 import math 
+import json
 
 class qgisSpectre:
     """QGIS Plugin Implementation."""
@@ -58,7 +59,6 @@ class qgisSpectre:
         """
         # Save reference to the QGIS interface
         self.iface = iface
-
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
 
@@ -83,7 +83,16 @@ class qgisSpectre:
 
         self.view = MouseReadGraphicsView(self.iface)
         #print "** INITIALIZING qgisSpectre"
-
+        # Initialize calibration information
+        self.calibfilename='calibrations.json'
+        """ TODO: Read in calibrations from calibration.json in the plugin directory
+            if the file does not exist, initialize the calibration hash with default values
+            When the values are changed, store the values under the layer and field in the 
+            calib dir and write it back to the file"""
+        self.calibration=dict()
+        self.defaultname='____default'
+        self.calibration[self.defaultname]=dict()
+        self.calibration[self.defaultname][self.defaultname]={"acalib":3.038,"bcalib":-6.365}
         self.pluginIsActive = False
         
 
@@ -288,6 +297,7 @@ class qgisSpectre:
         ntext.setPos(self.scene.end+50,1)
         
     def updatea(self):
+        # Store values per layer and field
         self.scene.acalib=float(self.dlg.leA.text())
 
 
