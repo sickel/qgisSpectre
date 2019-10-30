@@ -244,7 +244,7 @@ class qgisSpectre:
         #TODO: Keep spectra to compare
         #DONE: Draw spectra as line, not "line-histogram"
         #TODO: Select different types of 
-        #TODO: Save as file 
+        #DONE: Save as file 
         #DONE: export data to clipboard
         #TODO: export image to clipboard
         #TODO: Peak detection
