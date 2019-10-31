@@ -94,15 +94,17 @@ class qgisSpectre:
         #       "Storing", self.plugin_dir+"+>"+jsonfile,
         #        level=Qgis.Success, duration=3)
         self.defaultname='_Z_Z_Z_default' 
-        if os.path.isfile(jsonfile):
+        try:
             with open(jsonfile) as readfile:
                 self.calibration=json.load(readfile)
+            self.iface.messageBar().pushMessage(
+               "reading", self.plugin_dir+"+>"+jsonfile,
+                level=Qgis.Success, duration=3)
             # Reads in stored calibrations
-        else:
+        except:
             self.calibration=dict()
-           
             self.calibration[self.defaultname]=dict()
-            self.calibration[self.defaultname][self.defaultname]={"acalib":3.038,"bcalib":-6.365}
+            self.calibration[self.defaultname][self.defaultname]={"acalib":3.024,"bcalib":-4.365}
             with open(jsonfile,'w') as writefile:
                 json.dump(self.calibration,writefile)
         self.pluginIsActive = False
@@ -256,7 +258,7 @@ class qgisSpectre:
             for n in self.view.spectreval:
                 if n==0:
                     n=0.9
-                dataset.append(math.log(n))
+                dataset.append(math.log(n)-math.log(0.9))
         else:
             dataset=self.view.spectreval
         #DONE: Add x and y axis
@@ -316,19 +318,39 @@ class qgisSpectre:
         ntext=self.scene.addText("n = {}".format(str(self.view.n)))
         ntext.setPos(self.scene.end+50,1)
         
-    def updatea(self):
+    def updatecalib(self):
         # Store values per layer and field
+        layername=self.dlg.qgLayer.currentText()
+        fieldname=self.dlg.qgField.currentText()
         self.scene.acalib=float(self.dlg.leA.text())
-
-
-    def updateb(self):
         self.scene.bcalib=float(self.dlg.leB.text())
+        if not (layername in self.calibration):
+            self.calibration[layername]=dict()
+        self.calibration[layername][fieldname]={"acalib":self.scene.acalib,"bcalib":self.scene.bcalib}
+        # The following lines to be removed when laib per layer is handled correctly        
+    
+    def setdefault(self):
+        # TODO: COnnect to default checkbos
+        self.calibration[self.defaultname][self.defaultname]["acalib"]=self.scene.acalib
+        self.calibration[self.defaultname][self.defaultname]["bcalib"]=self.scene.bcalib
+        # TODO: Set acalib and bcalib to default values when button is pressed
         
     def findselected(self):
         """ Is being run when points have been selected. Makes a sum spectra from selected points"""
+        layername=self.dlg.qgLayer.currentText()
+        fieldname=self.dlg.qgField.currentText()
         layer=self.dlg.qgLayer.currentLayer()
         if layer==None:
             return # Happens some times, just as well to return
+        if layername in self.calibration:
+            if fieldname in self.calibration[layername]:
+                self.scene.acalib=self.calibration[layername][fieldname]["acalib"]
+                self.scene.bcalib=self.calibration[layername][fieldname]["bcalib"]
+        else:
+            self.scene.acalib=self.calibration[self.defaultname][self.defaultname]["acalib"]
+            self.scene.bcalib=self.calibration[self.defaultname][self.defaultname]["bcalib"]
+        self.dlg.leA.setText(str(self.scene.acalib))
+        self.dlg.leB.setText(str(self.scene.bcalib))
         sels=layer.selectedFeatures() # The selected features in the active (from this plugin's point of view) layer
         n=len(sels)
         if n>0:
@@ -370,6 +392,13 @@ class qgisSpectre:
         clipboard.setText(text)
         
         # TODO: Make a graphical copy
+    def saveCalibration(self):
+        """ Saves the calibration data """
+        jsonfile=self.plugin_dir+"/"+self.calibfilename
+        with open(jsonfile,'w') as writefile:
+            json.dump(self.calibration,writefile)
+        
+        
         
     def run(self):
         """Run method that loads and starts the plugin"""
@@ -388,7 +417,6 @@ class qgisSpectre:
             #self.scene.bcalib=-6.365
             self.scene.acalib=self.calibration[self.defaultname][self.defaultname]["acalib"]
             self.scene.bcalib=self.calibration[self.defaultname][self.defaultname]["bcalib"]
-     
             self.dlg.leA.setText(str(self.scene.acalib))
             self.dlg.leB.setText(str(self.scene.bcalib))
             self.unit='keV'
@@ -406,6 +434,7 @@ class qgisSpectre:
             # DONE: Repopulate when layers are added or removed
             # DONE both by using qgisWidget
             self.dlg.pBCopy.clicked.connect(self.spectreToClipboard)
+            self.dlg.pBSaveCalib.clicked.connect(self.saveCalibration)
             self.dlg.pBSave.clicked.connect(self.view.saveImage)
             
             # connect to provide cleanup on closing of dockwidget
@@ -416,8 +445,8 @@ class qgisSpectre:
             self.dlg.cbLog.stateChanged.connect(self.findselected)
             self.dlg.qgField.currentIndexChanged['QString'].connect(self.findselected)
             self.dlg.qgLayer.currentIndexChanged['QString'].connect(self.findselected)
-            self.dlg.leA.textChanged['QString'].connect(self.updatea)
-            self.dlg.leB.textChanged['QString'].connect(self.updateb)
+            self.dlg.leA.textChanged['QString'].connect(self.updatecalib)
+            self.dlg.leB.textChanged['QString'].connect(self.updatecalib)
             self.findselected()
             
                 
