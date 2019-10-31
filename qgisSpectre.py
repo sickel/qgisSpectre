@@ -89,11 +89,24 @@ class qgisSpectre:
             if the file does not exist, initialize the calibration hash with default values
             When the values are changed, store the values under the layer and field in the 
             calib dir and write it back to the file"""
-        self.calibration=dict()
-        self.defaultname='____default'
-        self.calibration[self.defaultname]=dict()
-        self.calibration[self.defaultname][self.defaultname]={"acalib":3.038,"bcalib":-6.365}
+        jsonfile=self.plugin_dir+"/"+self.calibfilename
+        #self.iface.messageBar().pushMessage(
+        #       "Storing", self.plugin_dir+"+>"+jsonfile,
+        #        level=Qgis.Success, duration=3)
+        self.defaultname='_Z_Z_Z_default' 
+        if os.path.isfile(jsonfile):
+            with open(jsonfile) as readfile:
+                self.calibration=json.load(readfile)
+            # Reads in stored calibrations
+        else:
+            self.calibration=dict()
+           
+            self.calibration[self.defaultname]=dict()
+            self.calibration[self.defaultname][self.defaultname]={"acalib":3.038,"bcalib":-6.365}
+            with open(jsonfile,'w') as writefile:
+                json.dump(self.calibration,writefile)
         self.pluginIsActive = False
+            
         
 
     # noinspection PyMethodMayBeStatic
@@ -284,13 +297,20 @@ class qgisSpectre:
             n+=1
         self.scene.end=n-1
         tickval=self.tickinterval
+        acalib=self.calibration[self.defaultname][self.defaultname]["acalib"]
+        bcalib=self.calibration[self.defaultname][self.defaultname]["bcalib"]
+        
+        maxval=acalib*n+bcalib
+        tickdist=tickval
+        #if maxval/n > 5:             # Avoids to tight numbering. 
+        #    tickdist*=2 # Needs some better vay of doing this - 
         left=self.scene.left
-        while tickval < self.scene.acalib*n+self.scene.bcalib:
-            tickch=(tickval-self.scene.bcalib)/self.scene.acalib+left
+        while tickval < maxval:
+            tickch=(tickval-bcalib)/acalib+left
             self.scene.addLine(float(tickch),float(h-bt),float(tickch),float(h-bt+5)) # Ticklines
             text=self.scene.addText(str(tickval))
             text.setPos(tickch+left-40, 280)
-            tickval+=self.tickinterval
+            tickval+=tickdist
         text=self.scene.addText(self.unit)
         text.setPos(self.scene.end+15,280)
         ntext=self.scene.addText("n = {}".format(str(self.view.n)))
@@ -364,8 +384,11 @@ class qgisSpectre:
             self.scene.left=None
             # TODO: The four next settings to be user-settable
             self.tickinterval=100
-            self.scene.acalib=3.038
-            self.scene.bcalib=-6.365
+            #self.scene.acalib=3.038
+            #self.scene.bcalib=-6.365
+            self.scene.acalib=self.calibration[self.defaultname][self.defaultname]["acalib"]
+            self.scene.bcalib=self.calibration[self.defaultname][self.defaultname]["bcalib"]
+     
             self.dlg.leA.setText(str(self.scene.acalib))
             self.dlg.leB.setText(str(self.scene.bcalib))
             self.unit='keV'
