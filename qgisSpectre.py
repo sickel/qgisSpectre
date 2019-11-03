@@ -44,6 +44,7 @@ from qgis.PyQt.QtGui import QPen, QBrush
 from .qgisSpectre_dockwidget import qgisSpectreDockWidget
 import os.path
 import math 
+import json
 
 class qgisSpectre:
     """QGIS Plugin Implementation."""
@@ -58,7 +59,6 @@ class qgisSpectre:
         """
         # Save reference to the QGIS interface
         self.iface = iface
-
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
 
@@ -83,8 +83,32 @@ class qgisSpectre:
 
         self.view = MouseReadGraphicsView(self.iface)
         #print "** INITIALIZING qgisSpectre"
-
+        # Initialize calibration information
+        self.calibfilename='calibrations.json'
+        """ TODO: Read in calibrations from calibration.json in the plugin directory
+            if the file does not exist, initialize the calibration hash with default values
+            When the values are changed, store the values under the layer and field in the 
+            calib dir and write it back to the file"""
+        jsonfile=self.plugin_dir+"/"+self.calibfilename
+        #self.iface.messageBar().pushMessage(
+        #       "Storing", self.plugin_dir+"+>"+jsonfile,
+        #        level=Qgis.Success, duration=3)
+        self.defaultname='_Z_Z_Z_default' 
+        try:
+            with open(jsonfile) as readfile:
+                self.calibration=json.load(readfile)
+            self.iface.messageBar().pushMessage(
+               "reading", self.plugin_dir+"+>"+jsonfile,
+                level=Qgis.Success, duration=3)
+            # Reads in stored calibrations
+        except:
+            self.calibration=dict()
+            self.calibration[self.defaultname]=dict()
+            self.calibration[self.defaultname][self.defaultname]={"acalib":3.024,"bcalib":-4.365}
+            with open(jsonfile,'w') as writefile:
+                json.dump(self.calibration,writefile)
         self.pluginIsActive = False
+            
         
 
     # noinspection PyMethodMayBeStatic
@@ -234,7 +258,7 @@ class qgisSpectre:
             for n in self.view.spectreval:
                 if n==0:
                     n=0.9
-                dataset.append(math.log(n))
+                dataset.append(math.log(n)-math.log(0.9))
         else:
             dataset=self.view.spectreval
         #DONE: Add x and y axis
@@ -275,24 +299,66 @@ class qgisSpectre:
             n+=1
         self.scene.end=n-1
         tickval=self.tickinterval
+        acalib=self.calibration[self.defaultname][self.defaultname]["acalib"]
+        bcalib=self.calibration[self.defaultname][self.defaultname]["bcalib"]
+        
+        maxval=acalib*n+bcalib
+        tickdist=tickval
+        #if maxval/n > 5:             # Avoids to tight numbering. 
+        #    tickdist*=2 # Needs some better vay of doing this - 
         left=self.scene.left
-        while tickval < self.scene.acalib*n+self.scene.bcalib:
-            tickch=(tickval-self.scene.bcalib)/self.scene.acalib+left
+        while tickval < maxval:
+            tickch=(tickval-bcalib)/acalib+left
             self.scene.addLine(float(tickch),float(h-bt),float(tickch),float(h-bt+5)) # Ticklines
             text=self.scene.addText(str(tickval))
             text.setPos(tickch+left-40, 280)
-            tickval+=self.tickinterval
+            tickval+=tickdist
         text=self.scene.addText(self.unit)
         text.setPos(self.scene.end+15,280)
         ntext=self.scene.addText("n = {}".format(str(self.view.n)))
         ntext.setPos(self.scene.end+50,1)
         
+    def updatecalib(self):
+        # Store values per layer and field
+        self.dlg.cbDefault.setChecked(False)
+        layername=self.dlg.qgLayer.currentText()
+        fieldname=self.dlg.qgField.currentText()
+        self.scene.acalib=float(self.dlg.leA.text())
+        self.scene.bcalib=float(self.dlg.leB.text())
+        if not (layername in self.calibration):
+            self.calibration[layername]=dict()
+        self.calibration[layername][fieldname]={"acalib":self.scene.acalib,"bcalib":self.scene.bcalib}
         
+    def setdefault(self):
+        # TODO: COnnect to default checkbos
+        if self.dlg.cbDefault.isChecked():
+            self.calibration[self.defaultname][self.defaultname]["bcalib"]=self.scene.bcalib
+            self.calibration[self.defaultname][self.defaultname]["acalib"]=self.scene.acalib
+        # TODO: Set acalib and bcalib to default values when button is pressed
+        
+    def usedefault(self):
+        self.scene.bcalib=self.calibration[self.defaultname][self.defaultname]["bcalib"]
+        self.scene.acalib=self.calibration[self.defaultname][self.defaultname]["acalib"]
+        self.dlg.leA.setText(str(self.scene.acalib))
+        self.dlg.leB.setText(str(self.scene.bcalib))
+        
+
     def findselected(self):
         """ Is being run when points have been selected. Makes a sum spectra from selected points"""
+        layername=self.dlg.qgLayer.currentText()
+        fieldname=self.dlg.qgField.currentText()
         layer=self.dlg.qgLayer.currentLayer()
         if layer==None:
             return # Happens some times, just as well to return
+        if layername in self.calibration:
+            if fieldname in self.calibration[layername]:
+                self.scene.acalib=self.calibration[layername][fieldname]["acalib"]
+                self.scene.bcalib=self.calibration[layername][fieldname]["bcalib"]
+        else:
+            self.scene.acalib=self.calibration[self.defaultname][self.defaultname]["acalib"]
+            self.scene.bcalib=self.calibration[self.defaultname][self.defaultname]["bcalib"]
+        self.dlg.leA.setText(str(self.scene.acalib))
+        self.dlg.leB.setText(str(self.scene.bcalib))
         sels=layer.selectedFeatures() # The selected features in the active (from this plugin's point of view) layer
         n=len(sels)
         if n>0:
@@ -334,6 +400,12 @@ class qgisSpectre:
         clipboard.setText(text)
         
         # TODO: Make a graphical copy
+    def saveCalibration(self):
+        """ Saves the calibration data """
+        jsonfile=self.plugin_dir+"/"+self.calibfilename
+        with open(jsonfile,'w') as writefile:
+            json.dump(self.calibration,writefile)
+        
         
     def run(self):
         """Run method that loads and starts the plugin"""
@@ -348,8 +420,12 @@ class qgisSpectre:
             self.scene.left=None
             # TODO: The four next settings to be user-settable
             self.tickinterval=100
-            self.scene.acalib=3.038
-            self.scene.bcalib=-6.365
+            #self.scene.acalib=3.038
+            #self.scene.bcalib=-6.365
+            self.scene.acalib=self.calibration[self.defaultname][self.defaultname]["acalib"]
+            self.scene.bcalib=self.calibration[self.defaultname][self.defaultname]["bcalib"]
+            self.dlg.leA.setText(str(self.scene.acalib))
+            self.dlg.leB.setText(str(self.scene.bcalib))
             self.unit='keV'
             showch=False # Set to True to show channel values
             if showch:
@@ -365,6 +441,8 @@ class qgisSpectre:
             # DONE: Repopulate when layers are added or removed
             # DONE both by using qgisWidget
             self.dlg.pBCopy.clicked.connect(self.spectreToClipboard)
+            self.dlg.pBUseDefault.clicked.connect(self.usedefault)
+            self.dlg.pBSaveCalib.clicked.connect(self.saveCalibration)
             self.dlg.pBSave.clicked.connect(self.view.saveImage)
             
             # connect to provide cleanup on closing of dockwidget
@@ -373,10 +451,14 @@ class qgisSpectre:
             self.iface.mainWindow().addDockWidget(Qt.BottomDockWidgetArea, self.dlg)
             self.dlg.show()
             self.dlg.cbLog.stateChanged.connect(self.findselected)
+            self.dlg.cbDefault.stateChanged.connect(self.setdefault)
             self.dlg.qgField.currentIndexChanged['QString'].connect(self.findselected)
             self.dlg.qgLayer.currentIndexChanged['QString'].connect(self.findselected)
+            self.dlg.leA.textChanged['QString'].connect(self.updatecalib)
+            self.dlg.leB.textChanged['QString'].connect(self.updatecalib)
             self.findselected()
-
+            
+                
 class MouseReadGraphicsView(QGraphicsView):
     """ A class based on QGraphicsView to enable capture of mouse events"""
     
@@ -394,6 +476,7 @@ class MouseReadGraphicsView(QGraphicsView):
         scene=self.scene()
         x=self.linex
         ch=x-scene.left
+        
         energy=ch*scene.acalib+scene.bcalib
         # DONE: draw a vertical line where clicked. Mark energy
         message="{} keV (n={})".format(int(energy),self.spectreval[int(ch)])
