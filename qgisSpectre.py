@@ -227,6 +227,14 @@ class qgisSpectre:
     
     def drawspectra(self):
         """ Drawing the spectra on the graphicsstage """
+        layername=self.dlg.qgLayer.currentText()
+        fieldname=self.dlg.qgField.currentText()
+        layer=self.dlg.qgLayer.currentLayer()
+        if layer==None:
+            return # Happens some times, just as well to return
+        self.scene.acalib=float(self.dlg.leA.text())
+        self.scene.bcalib=float(self.dlg.leB.text())
+        self.scene.unit=self.dlg.leUnit.text()
         logscale=self.dlg.cbLog.isChecked()
         if logscale:
             dataset=[]
@@ -253,7 +261,8 @@ class qgisSpectre:
         self.scene.markerline=None
         backgroundbrush=QBrush(Qt.white)
         outlinepen=QPen(Qt.white)
-        self.scene.addRect(0,0,1200,300,outlinepen,backgroundbrush)
+        # Needs this when saving as png, or background from map will shine through
+        self.scene.addRect(0,0,1200,300,outlinepen,backgroundbrush) 
         self.scene.bottom=20 # Bottom clearing (for x tick marks and labels)
         self.scene.left=self.scene.bottom # Left clearing (for y tick marks and labels)
         n=self.scene.left
@@ -277,10 +286,12 @@ class qgisSpectre:
         s = QgsSettings()
         layername=self.dlg.qgLayer.currentText()
         fieldname=self.dlg.qgField.currentText()
-        acalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_a",s.value(self.pluginname+"/defaulta", 1))
-        bcalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_b",s.value(self.pluginname+"/defaultb", 0))
-        self.scene.unit=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_unit",s.value(self.pluginname+"/defaultunit", 0))
-        
+        # This is already read in from the fields
+        #acalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_a",s.value(self.pluginname+"/defaulta", 1))
+        #bcalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_b",s.value(self.pluginname+"/defaultb", 0))
+        #self.scene.unit=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_unit",s.value(self.pluginname+"/defaultunit", 0))
+        acalib=self.scene.acalib
+        bcalib=self.scene.bcalib
         maxval=acalib*n+bcalib
         tickdist=tickval
         #if maxval/n > 5:             # Avoids to tight numbering. 
@@ -298,7 +309,7 @@ class qgisSpectre:
         ntext.setPos(self.scene.end+50,1)
         
     def updatecalib(self):
-        # Store values per layer and field
+        """ Prepares newly typed in  calibration values for use """
         self.dlg.cbDefault.setChecked(False)
         layername=self.dlg.qgLayer.currentText()
         fieldname=self.dlg.qgField.currentText()
@@ -313,42 +324,42 @@ class qgisSpectre:
                    "Calibrating", "Invalid value(s)",
                     level=Qgis.Warning, duration=3)
     
-        #if not (layername in self.calibration):
-        #    self.calibration[layername]=dict()
-        #self.calibration[layername][fieldname]={"acalib":self.scene.acalib,"bcalib":self.scene.bcalib}
-        
+    
     def setdefault(self):
-        # TODO: COnnect to default checkbos
+        """ Stores actual values as defaults """
         s=QgsSettings()
         if self.dlg.cbDefault.isChecked():
             s.setValue(self.pluginname+"/defaulta",self.scene.acalib)
             s.setValue(self.pluginname+"/defaultb",self.scene.bcalib)
-            s.setValue(self.pluginname+"/defaultb",self.scene.unit)
+            s.setValue(self.pluginname+"/defaultunit",self.scene.unit)
         
     def usedefault(self):
+        """Fetches default values for the plot """
         s=QgsSettings()
         self.scene.bcalib=s.value(self.pluginname+"/defaultb", 0)      
         self.scene.acalib=s.value(self.pluginname+"/defaulta", 1)
         self.scene.unit=s.value(self.pluginname+"/defaultunit", 'Ch')
         self.dlg.leA.setText(str(self.scene.acalib))
         self.dlg.leB.setText(str(self.scene.bcalib))
-        self.dlg.leUnit.setText(str(self.scene.unit)
+        self.dlg.leUnit.setText(str(self.scene.unit))
 
-    def findselected(self):
-        """ Is being run when points have been selected. Makes a sum spectra from selected points"""
+    def prepareplot(self):
+        """ Reads in default values for selected layer before plotting"""
         layername=self.dlg.qgLayer.currentText()
         fieldname=self.dlg.qgField.currentText()
-        layer=self.dlg.qgLayer.currentLayer()
-        if layer==None:
-            return # Happens some times, just as well to return
         s=QgsSettings()
-        self.scene.acalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_a",s.value(self.pluginname+"/defaulta", 1))
-        self.scene.bcalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_b",s.value(self.pluginname+"/defaultb", 0))
+        self.scene.acalib=float(s.value(self.pluginname+"/"+layername+"_"+fieldname+"_a",s.value(self.pluginname+"/defaulta", 1)))
+        self.scene.bcalib=float(s.value(self.pluginname+"/"+layername+"_"+fieldname+"_b",s.value(self.pluginname+"/defaultb", 0)))
         self.scene.unit=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_unit",s.value(self.pluginname+"/defaultunit", 'Ch'))
         
         self.dlg.leA.setText(str(self.scene.acalib))
         self.dlg.leB.setText(str(self.scene.bcalib))
         self.dlg.leUnit.setText(str(self.scene.unit))
+        self.findselected()
+    
+    def findselected(self):
+        """ Is being run when points have been selected. Makes a sum spectra from selected points"""
+        layer=self.dlg.qgLayer.currentLayer()
         sels=layer.selectedFeatures() # The selected features in the active (from this plugin's point of view) layer
         n=len(sels)
         if n>0:
@@ -399,7 +410,7 @@ class qgisSpectre:
         s=QgsSettings()
         s.setValue(self.pluginname+"/"+layername+"_"+fieldname+"_a", self.scene.acalib)
         s.setValue(self.pluginname+"/"+layername+"_"+fieldname+"_b", self.scene.bcalib)
-        s.setValue(self.pluginname+"/"+layername+"_"+fieldname+"_unit", self.scene.defaultunit)
+        s.setValue(self.pluginname+"/"+layername+"_"+fieldname+"_unit", self.scene.unit)
         
     def run(self):
         """Run method that loads and starts the plugin"""
@@ -446,8 +457,8 @@ class qgisSpectre:
             self.dlg.show()
             self.dlg.cbLog.stateChanged.connect(self.findselected)
             self.dlg.cbDefault.stateChanged.connect(self.setdefault)
-            self.dlg.qgField.currentIndexChanged['QString'].connect(self.findselected)
-            self.dlg.qgLayer.currentIndexChanged['QString'].connect(self.findselected)
+            self.dlg.qgField.currentIndexChanged['QString'].connect(self.prepareplot)
+            self.dlg.qgLayer.currentIndexChanged['QString'].connect(self.prepareplot)
             self.dlg.leA.textChanged['QString'].connect(self.updatecalib)
             self.dlg.leB.textChanged['QString'].connect(self.updatecalib)
             self.findselected()
