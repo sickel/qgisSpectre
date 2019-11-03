@@ -38,7 +38,7 @@ from .resources import *
 from operator import add # To add spectra
 
 from PyQt5 import QtCore,QtGui
-from qgis.core import QgsProject, Qgis, QgsMapLayerType, QgsMapLayer,QgsMapLayerProxyModel,QgsFieldProxyModel
+from qgis.core import QgsProject, Qgis, QgsMapLayerType, QgsMapLayer,QgsMapLayerProxyModel,QgsFieldProxyModel,QgsSettings
 from qgis.PyQt.QtGui import QPen, QBrush
 # Import the code for the DockWidget
 from .qgisSpectre_dockwidget import qgisSpectreDockWidget
@@ -79,34 +79,9 @@ class qgisSpectre:
         self.menu = self.tr(u'&Spectre Viewer')
         self.toolbar = self.iface.addToolBar(u'Spectre viewer')
         self.toolbar.setObjectName(u'Spectre viewer')
-
+        self.pluginname="mortensickel_Spectrumviewer"
 
         self.view = MouseReadGraphicsView(self.iface)
-        #print "** INITIALIZING qgisSpectre"
-        # Initialize calibration information
-        self.calibfilename='calibrations.json'
-        """ TODO: Read in calibrations from calibration.json in the plugin directory
-            if the file does not exist, initialize the calibration hash with default values
-            When the values are changed, store the values under the layer and field in the 
-            calib dir and write it back to the file"""
-        jsonfile=self.plugin_dir+"/"+self.calibfilename
-        #self.iface.messageBar().pushMessage(
-        #       "Storing", self.plugin_dir+"+>"+jsonfile,
-        #        level=Qgis.Success, duration=3)
-        self.defaultname='_Z_Z_Z_default' 
-        try:
-            with open(jsonfile) as readfile:
-                self.calibration=json.load(readfile)
-            self.iface.messageBar().pushMessage(
-               "reading", self.plugin_dir+"+>"+jsonfile,
-                level=Qgis.Success, duration=3)
-            # Reads in stored calibrations
-        except:
-            self.calibration=dict()
-            self.calibration[self.defaultname]=dict()
-            self.calibration[self.defaultname][self.defaultname]={"acalib":3.024,"bcalib":-4.365}
-            with open(jsonfile,'w') as writefile:
-                json.dump(self.calibration,writefile)
         self.pluginIsActive = False
             
         
@@ -299,8 +274,12 @@ class qgisSpectre:
             n+=1
         self.scene.end=n-1
         tickval=self.tickinterval
-        acalib=self.calibration[self.defaultname][self.defaultname]["acalib"]
-        bcalib=self.calibration[self.defaultname][self.defaultname]["bcalib"]
+        s = QgsSettings()
+        layername=self.dlg.qgLayer.currentText()
+        fieldname=self.dlg.qgField.currentText()
+        acalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_a",s.value(self.pluginname+"/defaulta", 1))
+        bcalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_b",s.value(self.pluginname+"/defaultb", 0))
+        self.scene.unit=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_unit",s.value(self.pluginname+"/defaultunit", 0))
         
         maxval=acalib*n+bcalib
         tickdist=tickval
@@ -313,7 +292,7 @@ class qgisSpectre:
             text=self.scene.addText(str(tickval))
             text.setPos(tickch+left-40, 280)
             tickval+=tickdist
-        text=self.scene.addText(self.unit)
+        text=self.scene.addText(self.scene.unit)
         text.setPos(self.scene.end+15,280)
         ntext=self.scene.addText("n = {}".format(str(self.view.n)))
         ntext.setPos(self.scene.end+50,1)
@@ -323,25 +302,37 @@ class qgisSpectre:
         self.dlg.cbDefault.setChecked(False)
         layername=self.dlg.qgLayer.currentText()
         fieldname=self.dlg.qgField.currentText()
-        self.scene.acalib=float(self.dlg.leA.text())
-        self.scene.bcalib=float(self.dlg.leB.text())
-        if not (layername in self.calibration):
-            self.calibration[layername]=dict()
-        self.calibration[layername][fieldname]={"acalib":self.scene.acalib,"bcalib":self.scene.bcalib}
+        try:
+            self.scene.acalib=float(self.dlg.leA.text())
+            self.scene.bcalib=float(self.dlg.leB.text())
+        except ValueError:
+            if self.dlg.leA.text()=='-' or self.dlg.leB.text()=='-' or self.dlg.leA.text()=='' or self.dlg.leB.text()=='' :
+                pass
+            else:
+              self.iface.messageBar().pushMessage(
+                   "Calibrating", "Invalid value(s)",
+                    level=Qgis.Warning, duration=3)
+    
+        #if not (layername in self.calibration):
+        #    self.calibration[layername]=dict()
+        #self.calibration[layername][fieldname]={"acalib":self.scene.acalib,"bcalib":self.scene.bcalib}
         
     def setdefault(self):
         # TODO: COnnect to default checkbos
+        s=QgsSettings()
         if self.dlg.cbDefault.isChecked():
-            self.calibration[self.defaultname][self.defaultname]["bcalib"]=self.scene.bcalib
-            self.calibration[self.defaultname][self.defaultname]["acalib"]=self.scene.acalib
-        # TODO: Set acalib and bcalib to default values when button is pressed
+            s.setValue(self.pluginname+"/defaulta",self.scene.acalib)
+            s.setValue(self.pluginname+"/defaultb",self.scene.bcalib)
+            s.setValue(self.pluginname+"/defaultb",self.scene.unit)
         
     def usedefault(self):
-        self.scene.bcalib=self.calibration[self.defaultname][self.defaultname]["bcalib"]
-        self.scene.acalib=self.calibration[self.defaultname][self.defaultname]["acalib"]
+        s=QgsSettings()
+        self.scene.bcalib=s.value(self.pluginname+"/defaultb", 0)      
+        self.scene.acalib=s.value(self.pluginname+"/defaulta", 1)
+        self.scene.unit=s.value(self.pluginname+"/defaultunit", 'Ch')
         self.dlg.leA.setText(str(self.scene.acalib))
         self.dlg.leB.setText(str(self.scene.bcalib))
-        
+        self.dlg.leUnit.setText(str(self.scene.unit)
 
     def findselected(self):
         """ Is being run when points have been selected. Makes a sum spectra from selected points"""
@@ -350,15 +341,14 @@ class qgisSpectre:
         layer=self.dlg.qgLayer.currentLayer()
         if layer==None:
             return # Happens some times, just as well to return
-        if layername in self.calibration:
-            if fieldname in self.calibration[layername]:
-                self.scene.acalib=self.calibration[layername][fieldname]["acalib"]
-                self.scene.bcalib=self.calibration[layername][fieldname]["bcalib"]
-        else:
-            self.scene.acalib=self.calibration[self.defaultname][self.defaultname]["acalib"]
-            self.scene.bcalib=self.calibration[self.defaultname][self.defaultname]["bcalib"]
+        s=QgsSettings()
+        self.scene.acalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_a",s.value(self.pluginname+"/defaulta", 1))
+        self.scene.bcalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_b",s.value(self.pluginname+"/defaultb", 0))
+        self.scene.unit=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_unit",s.value(self.pluginname+"/defaultunit", 'Ch'))
+        
         self.dlg.leA.setText(str(self.scene.acalib))
         self.dlg.leB.setText(str(self.scene.bcalib))
+        self.dlg.leUnit.setText(str(self.scene.unit))
         sels=layer.selectedFeatures() # The selected features in the active (from this plugin's point of view) layer
         n=len(sels)
         if n>0:
@@ -366,7 +356,7 @@ class qgisSpectre:
             #        "Drawing spectra", "Integrated over {} measurements".format(str(n)),
             #        level=Qgis.Success, duration=3)
             fieldname=self.dlg.qgField.currentText()
-            # TODO: Rewrite to make it possible to read in a spectra as a string of comma-separated numbers
+            # DONE: Rewrite to make it possible to read in a spectra as a string of comma-separated numbers
             if fieldname=='' or fieldname== None:
                 return # Invalid fieldname, probably not selected yet
             stringspec = isinstance(sels[0][fieldname],str)
@@ -400,12 +390,16 @@ class qgisSpectre:
         clipboard.setText(text)
         
         # TODO: Make a graphical copy
+    
+    
     def saveCalibration(self):
         """ Saves the calibration data """
-        jsonfile=self.plugin_dir+"/"+self.calibfilename
-        with open(jsonfile,'w') as writefile:
-            json.dump(self.calibration,writefile)
-        
+        layername=self.dlg.qgLayer.currentText()
+        fieldname=self.dlg.qgField.currentText()
+        s=QgsSettings()
+        s.setValue(self.pluginname+"/"+layername+"_"+fieldname+"_a", self.scene.acalib)
+        s.setValue(self.pluginname+"/"+layername+"_"+fieldname+"_b", self.scene.bcalib)
+        s.setValue(self.pluginname+"/"+layername+"_"+fieldname+"_unit", self.scene.defaultunit)
         
     def run(self):
         """Run method that loads and starts the plugin"""
@@ -420,16 +414,16 @@ class qgisSpectre:
             self.scene.left=None
             # TODO: The four next settings to be user-settable
             self.tickinterval=100
-            #self.scene.acalib=3.038
-            #self.scene.bcalib=-6.365
-            self.scene.acalib=self.calibration[self.defaultname][self.defaultname]["acalib"]
-            self.scene.bcalib=self.calibration[self.defaultname][self.defaultname]["bcalib"]
+            s=QgsSettings()
+            self.scene.acalib=s.value(self.pluginname+"/defaulta", 1)
+            self.scene.bcalib=s.value(self.pluginname+"/defaultb", 0)
+            self.scene.unit=s.value(self.pluginname+"/defaultunit","Ch")
             self.dlg.leA.setText(str(self.scene.acalib))
             self.dlg.leB.setText(str(self.scene.bcalib))
-            self.unit='keV'
+            self.dlg.leUnit.setText(str(self.scene.unit))
             showch=False # Set to True to show channel values
             if showch:
-                self.unit='Ch'
+                self.scene.unit='Ch'
                 self.scene.acalib=1
                 self.scene.bcalib=0
             self.view.setScene(self.scene)
