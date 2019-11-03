@@ -90,11 +90,10 @@
                 <widget class="QLineEdit" name="leB">
             </widget>
         </item>
-      <item>
-        
-            <widget class="QCheckBox" name="cbDefault">
+        <item>
+         <widget class="QPushButton" name="pBUseDefault">
           <property name="text">
-           <string>Set default</string>
+           <string>Use default</string>
           </property>
          </widget>
         </item>
@@ -116,16 +115,17 @@
             </widget>
             </item>
         <item>
-         <widget class="QPushButton" name="pBSaveCalib">
+        
+            <widget class="QCheckBox" name="cbDefault">
           <property name="text">
-           <string>Save</string>
+           <string>Set default</string>
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QPushButton" name="pBUseDefault">
+      <item>
+         <widget class="QPushButton" name="pBSaveCalib">
           <property name="text">
-           <string>Use default</string>
+           <string>Save</string>
           </property>
          </widget>
         </item>

@@ -320,6 +320,7 @@ class qgisSpectre:
         
     def updatecalib(self):
         # Store values per layer and field
+        self.dlg.cbDefault.setChecked(False)
         layername=self.dlg.qgLayer.currentText()
         fieldname=self.dlg.qgField.currentText()
         self.scene.acalib=float(self.dlg.leA.text())
@@ -327,14 +328,21 @@ class qgisSpectre:
         if not (layername in self.calibration):
             self.calibration[layername]=dict()
         self.calibration[layername][fieldname]={"acalib":self.scene.acalib,"bcalib":self.scene.bcalib}
-        # The following lines to be removed when laib per layer is handled correctly        
-    
+        
     def setdefault(self):
         # TODO: COnnect to default checkbos
-        self.calibration[self.defaultname][self.defaultname]["acalib"]=self.scene.acalib
-        self.calibration[self.defaultname][self.defaultname]["bcalib"]=self.scene.bcalib
+        if self.dlg.cbDefault.isChecked():
+            self.calibration[self.defaultname][self.defaultname]["bcalib"]=self.scene.bcalib
+            self.calibration[self.defaultname][self.defaultname]["acalib"]=self.scene.acalib
         # TODO: Set acalib and bcalib to default values when button is pressed
         
+    def usedefault(self):
+        self.scene.bcalib=self.calibration[self.defaultname][self.defaultname]["bcalib"]
+        self.scene.acalib=self.calibration[self.defaultname][self.defaultname]["acalib"]
+        self.dlg.leA.setText(str(self.scene.acalib))
+        self.dlg.leB.setText(str(self.scene.bcalib))
+        
+
     def findselected(self):
         """ Is being run when points have been selected. Makes a sum spectra from selected points"""
         layername=self.dlg.qgLayer.currentText()
@@ -399,7 +407,6 @@ class qgisSpectre:
             json.dump(self.calibration,writefile)
         
         
-        
     def run(self):
         """Run method that loads and starts the plugin"""
 
@@ -434,6 +441,7 @@ class qgisSpectre:
             # DONE: Repopulate when layers are added or removed
             # DONE both by using qgisWidget
             self.dlg.pBCopy.clicked.connect(self.spectreToClipboard)
+            self.dlg.pBUseDefault.clicked.connect(self.usedefault)
             self.dlg.pBSaveCalib.clicked.connect(self.saveCalibration)
             self.dlg.pBSave.clicked.connect(self.view.saveImage)
             
@@ -443,6 +451,7 @@ class qgisSpectre:
             self.iface.mainWindow().addDockWidget(Qt.BottomDockWidgetArea, self.dlg)
             self.dlg.show()
             self.dlg.cbLog.stateChanged.connect(self.findselected)
+            self.dlg.cbDefault.stateChanged.connect(self.setdefault)
             self.dlg.qgField.currentIndexChanged['QString'].connect(self.findselected)
             self.dlg.qgLayer.currentIndexChanged['QString'].connect(self.findselected)
             self.dlg.leA.textChanged['QString'].connect(self.updatecalib)
