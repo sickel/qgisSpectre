@@ -44,6 +44,8 @@ from .qgisSpectre_dockwidget import qgisSpectreDockWidget
 import os.path
 import math 
 import json
+from .detect_peaks import detect_peaks
+import numpy as np
 
 class qgisSpectre:
     """QGIS Plugin Implementation."""
@@ -245,6 +247,12 @@ class qgisSpectre:
         else:
             dataset=self.view.spectreval
         
+        smoothhalf=15
+        smoothed=dataset[0:smoothhalf]
+        for i in range(smoothhalf+1,len(dataset)-(smoothhalf+1)):
+            #smoothed.append(sum(dataset[i-smoothhalf:i+smoothhalf])/(2*smoothhalf+1))
+            smoothed.append(sum(dataset[i-smoothhalf:i+smoothhalf]))
+        #dataset=smoothed
         #DONE: Add x and y axis
         #DONE: Add scale factors to scale x axis from channel number to keV
         #DONE: Add settings to have custom unit
@@ -293,9 +301,11 @@ class qgisSpectre:
         #acalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_a",s.value(self.pluginname+"/defaulta", 1))
         #bcalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_b",s.value(self.pluginname+"/defaultb", 0))
         #self.scene.unit=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_unit",s.value(self.pluginname+"/defaultunit", 0))
-        peaks=detect_peaks(np.array(self.view.spectreval),mph=1,mpd=30)
+        
+        peaks=detect_peaks(np.array(self.view.spectreval),mph=0.04,mpd=200)
+        peakpen=QPen(Qt.blue)
         for peak in peaks:
-          self.scene.addLine(float(peak),float(h-bt),float(peak),float(5)) # Peaks
+          self.scene.addLine(float(peak),float(h-bt),float(peak),float(5),peakpen) # Peaks
         acalib=self.scene.acalib
         bcalib=self.scene.bcalib
         maxval=acalib*n+bcalib
