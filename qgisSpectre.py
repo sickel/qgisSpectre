@@ -247,7 +247,7 @@ class qgisSpectre:
         else:
             dataset=self.view.spectreval
         
-        smoothhalf=15
+        smoothhalf=30
         smoothed=dataset[0:smoothhalf]
         for i in range(smoothhalf+1,len(dataset)-(smoothhalf+1)):
             #smoothed.append(sum(dataset[i-smoothhalf:i+smoothhalf])/(2*smoothhalf+1))
@@ -302,7 +302,7 @@ class qgisSpectre:
         #bcalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_b",s.value(self.pluginname+"/defaultb", 0))
         #self.scene.unit=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_unit",s.value(self.pluginname+"/defaultunit", 0))
         
-        peaks=detect_peaks(np.array(self.view.spectreval),mph=0.04,mpd=200)
+        peaks=detect_peaks(np.array(smoothed),mph=max(smoothed)/10,mpd=100)
         peakpen=QPen(Qt.blue)
         for peak in peaks:
           self.scene.addLine(float(peak),float(h-bt),float(peak),float(5),peakpen) # Peaks
