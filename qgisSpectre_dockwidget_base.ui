@@ -20,18 +20,44 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <layout class="QGridLayout" name="gridLayout">
-    <item row="2" column="0">
-     <layout class="QHBoxLayout" name="hlMain" stretch="5,1">
-     
+     <layout class="QHBoxLayout" name="hlMain" stretch="1,5">
          <item>
        <layout class="QVBoxLayout" name="verticalLayout">
          <item>
+     <layout class="QHBoxLayout" name="hlMain" stretch="1,5">
+        
+           
+           <item>
+            <widget class="QLabel" name="label">
+            <property name="text">
+                <string>Layer : </string>
+            </property>
+            </widget>
+    
+        </item>
+    
+           <item>
        <widget class="QgsMapLayerComboBox" name="qgLayer"/>
       </item>
+    </layout>
+</item>  
       <item>
-       <widget class="QgsFieldComboBox" name="qgField"/>
+       <layout class="QHBoxLayout" name="hlMain" stretch="1,5">
+        
+           
+           <item>
+            <widget class="QLabel" name="label">
+            <property name="text">
+                <string>Field : </string>
+            </property>
+            </widget>
+    
+        </item>
+        <item> 
+          <widget class="QgsFieldComboBox" name="qgField"/>
       </item>
+    </layout>
+</item>  
      
            <item>
          <widget class="QPushButton" name="pBCopy">
@@ -133,9 +159,7 @@
        </layout>
       </item>
      </layout>
-    </item>
-   </layout>
-  </widget>
+    </widget>
  </widget>
  <customwidgets>
   <customwidget>
