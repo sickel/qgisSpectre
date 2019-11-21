@@ -226,6 +226,39 @@ class qgisSpectre:
         # remove the toolbar
         del self.toolbar
     
+    
+    def peaklocate(self,spectre):
+        factors=[2,-1,-2,-1,2]
+        norm=7
+        factors=[22,-67,-58,0,58,67,-22]
+        norm=252
+        factors=[86,-142,-193,-126,0,126,193,142,-86]
+        norm=1188
+        output=savgol(spectre,factors,norm)
+        peaks=[]
+        discriminator=max(spectre)/500
+        for idx,val in enumerate(output):
+            last=output[idx-1]
+            if (last-val) > discriminator and last>=0 and val <=0:
+                peaks.append(idx)            
+        return(peaks)
+    
+    def savgol(self,spectre,factors,norm):
+        halflen=(len(factors)-1)//2
+        output=[0]*halflen
+        for i in range(halflen,len(spectre)-halflen):
+            s=0
+            for j in range(0,len(factors)):
+                s+=spectre[i-halflen+j]*factors[j]
+            s/=norm
+            output.append(s)
+        return(output)
+    
+    def smooth(self,dataset):
+        factors=[15,-55,30,135,179,135,30,-55,15]
+        norm=429
+        return(self.savgol(dataset,factors,norm))
+    
     def drawspectra(self):
         """ Drawing the spectra on the graphicsstage """
         layername=self.dlg.qgLayer.currentText()
@@ -247,11 +280,7 @@ class qgisSpectre:
         else:
             dataset=self.view.spectreval
         
-        smoothhalf=30
-        smoothed=dataset[0:smoothhalf]
-        for i in range(smoothhalf+1,len(dataset)-(smoothhalf+1)):
-            #smoothed.append(sum(dataset[i-smoothhalf:i+smoothhalf])/(2*smoothhalf+1))
-            smoothed.append(sum(dataset[i-smoothhalf:i+smoothhalf]))
+        
         #dataset=smoothed
         #DONE: Add x and y axis
         #DONE: Add scale factors to scale x axis from channel number to keV
@@ -301,11 +330,13 @@ class qgisSpectre:
         #acalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_a",s.value(self.pluginname+"/defaulta", 1))
         #bcalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_b",s.value(self.pluginname+"/defaultb", 0))
         #self.scene.unit=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_unit",s.value(self.pluginname+"/defaultunit", 0))
-        
-        peaks=detect_peaks(np.array(smoothed),mph=max(smoothed)/10,mpd=100)
+        smoothed=self.smooth(dataset)
+        peaks=detect_peaks(np.array(smoothed),mph=max(smoothed)/40,mpd=40)
+        #peaks=self.peaklocate(dataset)
         peakpen=QPen(Qt.blue)
         for peak in peaks:
-          self.scene.addLine(float(peak),float(h-bt),float(peak),float(5),peakpen) # Peaks
+            loc=peak+self.scene.left
+            self.scene.addLine(float(loc),float(h-bt),float(loc),float(5),peakpen) # Peaks
         acalib=self.scene.acalib
         bcalib=self.scene.bcalib
         maxval=acalib*n+bcalib
