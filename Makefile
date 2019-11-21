@@ -33,6 +33,8 @@ LOCALES =
 # lrelease
 #LRELEASE = lrelease
 #LRELEASE = lrelease-qt4
+install:
+	/bin/cp -ar * ~/.local/share/QGIS/QGIS3/profiles/default/python/plugins/qgisSpectre/
 
 
 # translation

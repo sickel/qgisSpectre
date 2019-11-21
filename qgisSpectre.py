@@ -293,9 +293,6 @@ class qgisSpectre:
         #acalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_a",s.value(self.pluginname+"/defaulta", 1))
         #bcalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_b",s.value(self.pluginname+"/defaultb", 0))
         #self.scene.unit=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_unit",s.value(self.pluginname+"/defaultunit", 0))
-        peaks=detect_peaks(np.array(self.view.spectreval),mph=1,mpd=30)
-        for peak in peaks:
-          self.scene.addLine(float(peak),float(h-bt),float(peak),float(5)) # Peaks
         acalib=self.scene.acalib
         bcalib=self.scene.bcalib
         maxval=acalib*n+bcalib
