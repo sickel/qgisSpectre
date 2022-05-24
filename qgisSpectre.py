@@ -109,8 +109,8 @@ class qgisSpectre:
         enabled_flag=True,
         add_to_menu=True,
         add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
+        status_tip = None,
+        whats_this = None,
         parent=None):
         """Add a toolbar icon to the toolbar.
 
@@ -363,7 +363,7 @@ class qgisSpectre:
     def findselected(self):
         """ Is being run when points have been selected. Makes a sum spectra from selected points"""
         layer=self.dlg.qgLayer.currentLayer()
-        if layer==None:
+        if layer is None:
           return
         sels=layer.selectedFeatures() # The selected features in the active (from this plugin's point of view) layer
         n=len(sels)
@@ -373,7 +373,7 @@ class qgisSpectre:
             #        level=Qgis.Success, duration=3)
             fieldname=self.dlg.qgField.currentText()
             # DONE: Rewrite to make it possible to read in a spectra as a string of comma-separated numbers
-            if fieldname=='' or fieldname== None:
+            if fieldname=='' or fieldname is None:
                 return # Invalid fieldname, probably not selected yet
             stringspec = isinstance(sels[0][fieldname],str)
             stringspec = stringspec and (sels[0][fieldname].find(',') != -1)
@@ -387,7 +387,7 @@ class qgisSpectre:
                         spectre = list(map(int, vals))
                     del spectre[-1] # To get rid of last channel i.e. cosmic from RSI-spectra
                                     # TODO: customable removal of channels at top and/or bottom
-                    if sumspectre == None:
+                    if sumspectre is None:
                         sumspectre = spectre
                     else:
                         sumspectre = list( map(add, spectre, sumspectre))
@@ -490,9 +490,9 @@ class MouseReadGraphicsView(QGraphicsView):
         energy=ch*scene.acalib+scene.bcalib
         # DONE: draw a vertical line where clicked. Mark energy
         message="{} keV (n={})".format(int(energy),self.spectreval[int(ch)])
-        if self.scene().crdtext!=None:
+        if self.scene().crdtext is not None:
             self.scene().removeItem(self.scene().crdtext)
-        if self.scene().markerline!=None:
+        if self.scene().markerline is not None:
             self.scene().removeItem(self.scene().markerline)
         self.scene().crdtext=self.scene().addText(message)
         self.scene().crdtext.setPos(x,20)
@@ -516,9 +516,9 @@ class MouseReadGraphicsView(QGraphicsView):
         self.linex=min(self.scene().end,self.linex)
         self.drawline()
         if event.key()==Qt.Key_Escape: # To  be set to Esc 
-            if self.scene().crdtext!=None:
+            if self.scene().crdtext is not None:
                 self.scene().removeItem(self.scene().crdtext)
-            if self.scene().markerline!=None:
+            if self.scene().markerline is not None:
                 self.scene().removeItem(self.scene().markerline)
         
     def saveImage(self):
@@ -543,11 +543,11 @@ class MouseReadGraphicsView(QGraphicsView):
         
         #DONE: Show n at line
         if event.button() == 1:
-            if self.scene().left == None: # Not yet initialized
+            if self.scene is None or self.scene().left is None: # Not yet initialized
                 return
             coords=self.mapToScene(event.pos())    
             x = coords.x()
             self.linex=x
             # Make sure the data not is read out when being outside the spectra
-            if x != None and x > self.scene().left and x < self.scene().end:
+            if x not is None and x > self.scene().left and x < self.scene().end:
                 self.drawline()
