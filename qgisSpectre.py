@@ -419,7 +419,6 @@ class qgisSpectre:
         
     def run(self):
         """Run method that loads and starts the plugin"""
-
         if not self.pluginIsActive:
             self.pluginIsActive = True
             self.scene=QGraphicsScene()
@@ -437,11 +436,11 @@ class qgisSpectre:
             self.dlg.leA.setText(str(self.scene.acalib))
             self.dlg.leB.setText(str(self.scene.bcalib))
             self.dlg.leUnit.setText(str(self.scene.unit))
-            showch=False # Set to True to show channel values
+            showch = False # Set to True to show channel values
             if showch:
-                self.scene.unit='Ch'
-                self.scene.acalib=1
-                self.scene.bcalib=0
+                self.scene.unit = 'Ch'
+                self.scene.acalib = 1
+                self.scene.bcalib = 0
             self.view.setScene(self.scene)
             self.scene.setSceneRect(0,0,1200,300)
             # Replotting spectre when a new selection is made

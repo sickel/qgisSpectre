@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>564</width>
+    <width>306</width>
     <height>321</height>
    </rect>
   </property>
@@ -20,99 +20,89 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-     <layout class="QHBoxLayout" name="hlMain" stretch="1,5">
-         <item>
-       <layout class="QVBoxLayout" name="verticalLayout">
-         <item>
-     <layout class="QHBoxLayout" name="hlMain" stretch="1,5">
-        
-           
-           <item>
-            <widget class="QLabel" name="label">
-            <property name="text">
-                <string>Layer : </string>
-            </property>
-            </widget>
-    
-        </item>
-    
-           <item>
-       <widget class="QgsMapLayerComboBox" name="qgLayer"/>
-      </item>
-    </layout>
-</item>  
+   <layout class="QHBoxLayout" name="hlMain" stretch="1">
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetMaximumSize</enum>
+      </property>
       <item>
        <layout class="QHBoxLayout" name="hlMain" stretch="1,5">
-        
-           
-           <item>
-            <widget class="QLabel" name="label">
-            <property name="text">
-                <string>Field : </string>
-            </property>
-            </widget>
-    
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Layer : </string>
+          </property>
+         </widget>
         </item>
-        <item> 
-          <widget class="QgsFieldComboBox" name="qgField"/>
+        <item>
+         <widget class="QgsMapLayerComboBox" name="qgLayer"/>
+        </item>
+       </layout>
       </item>
-    </layout>
-</item>  
-     
-           <item>
-         <widget class="QPushButton" name="pBCopy">
+      <item>
+       <layout class="QHBoxLayout" name="hlMain" stretch="1,5">
+        <item>
+         <widget class="QLabel" name="label">
           <property name="text">
-           <string>Copy</string>
+           <string>Field : </string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pBSave">
+         <widget class="QgsFieldComboBox" name="qgField"/>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pBCopy">
+        <property name="text">
+         <string>Copy</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pBSave">
+        <property name="text">
+         <string>Save image</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="cbLog">
+        <property name="text">
+         <string>Log Scale</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Calibration coefficients : y=A*ch+B</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="hlCalib1">
+        <item>
+         <widget class="QLabel" name="label">
           <property name="text">
-           <string>Save image</string>
+           <string>A: </string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="cbLog">
+         <widget class="QLineEdit" name="leA"/>
+        </item>
+        <item>
+         <widget class="QLabel" name="label">
           <property name="text">
-           <string>Log Scale</string>
+           <string>B: </string>
           </property>
          </widget>
         </item>
         <item>
-            <widget class="QLabel" name="label">
-            <property name="text">
-                <string>Calibration coefficients : y=A*ch+B</string>
-            </property>
-            </widget>
-    
-        </item>
-        <item>
-        <layout class="QHBoxLayout" name="hlCalib1">
-            <item>
-            <widget class="QLabel" name="label">
-            <property name="text">
-                <string>A: </string>
-            </property>
-            </widget>
-    
-        </item>
-        <item>
-                <widget class="QLineEdit" name="leA">
-            </widget>
-            </item>
-        <item>
-            <widget class="QLabel" name="label">
-            <property name="text">
-                <string>B: </string>
-            </property>
-            </widget>
-    
-        </item>
-              <item>
-                <widget class="QLineEdit" name="leB">
-            </widget>
+         <widget class="QLineEdit" name="leB"/>
         </item>
         <item>
          <widget class="QPushButton" name="pBUseDefault">
@@ -121,45 +111,40 @@
           </property>
          </widget>
         </item>
-        
-    </layout>
-</item>
-<item>
-        <layout class="QHBoxLayout" name="hlCalib2">
-            <item>
-            <widget class="QLabel" name="label">
-            <property name="text">
-                <string>Unit:</string>
-            </property>
-            </widget>
-    
-        </item>
-            <item>
-                <widget class="QLineEdit" name="leUnit">
-            </widget>
-            </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="hlCalib2">
         <item>
-        
-            <widget class="QCheckBox" name="cbDefault">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Unit:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="leUnit"/>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="cbDefault">
           <property name="text">
            <string>Set default</string>
           </property>
          </widget>
         </item>
-      <item>
+        <item>
          <widget class="QPushButton" name="pBSaveCalib">
           <property name="text">
            <string>Save</string>
           </property>
          </widget>
         </item>
-        
-        </layout>
-        </item>
        </layout>
       </item>
      </layout>
-    </widget>
+    </item>
+   </layout>
+  </widget>
  </widget>
  <customwidgets>
   <customwidget>
