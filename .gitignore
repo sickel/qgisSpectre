@@ -5,3 +5,4 @@ help/build
 *.kate-swp
 test/postgis.sql
 test/testdata.gpkg
+zip_build/*
