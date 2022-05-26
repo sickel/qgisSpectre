@@ -395,8 +395,9 @@ class qgisSpectre:
                 self.view.n=n
                 self.drawspectra()
             else:
+                # This is coming up too often
                 self.iface.messageBar().pushMessage(
-                    "Error", "Use an array field or a comma separated string",
+                    "Warning", "Use an array field or a comma separated string",
                     level=Qgis.Warning, duration=3)
                     
     def spectreToClipboard(self):
