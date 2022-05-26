@@ -75,7 +75,7 @@ class qgisSpectre:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&Spectre Viewer')
+        self.menu = self.tr(u'&Spectral data')
         self.toolbar = self.iface.addToolBar(u'Spectre viewer')
         self.toolbar.setObjectName(u'Spectre viewer')
         self.pluginname="mortensickel_Spectrumviewer"
@@ -166,7 +166,7 @@ class qgisSpectre:
             self.toolbar.addAction(action)
 
         if add_to_menu:
-            self.iface.addPluginToDatabaseMenu(
+            self.iface.addPluginToVectorMenu(
                 self.menu,
                 action)
 
@@ -217,7 +217,7 @@ class qgisSpectre:
         #print "** UNLOAD qgisSpectre"
 
         for action in self.actions:
-            self.iface.removePluginDatabaseMenu(
+            self.iface.removePluginVectorMenu(
                 self.tr(u'&Spectre Viewer'),
                 action)
             self.iface.removeToolBarIcon(action)
@@ -233,14 +233,14 @@ class qgisSpectre:
             return # Happens some times, just as well to return
         self.scene.acalib=float(self.dlg.leA.text())
         self.scene.bcalib=float(self.dlg.leB.text())
-        self.scene.unit=self.dlg.leUnit.text()
+        self.updateUnit()
         logscale=self.dlg.cbLog.isChecked()
         if logscale:
             dataset=[]
-            for n in self.view.spectreval:
-                if n==0:
-                    n=0.9
-                dataset.append(math.log(n)-math.log(0.9))
+            for ch in self.view.spectreval:
+                if ch==0:
+                    ch=0.9
+                dataset.append(math.log(ch)-math.log(0.9))
                 # 0.9 offset and back to be able to plot zero-values
         else:
             dataset=self.view.spectreval
@@ -268,23 +268,23 @@ class qgisSpectre:
         self.scene.addRect(0,0,1200,300,outlinepen,backgroundbrush) 
         self.scene.bottom=20 # Bottom clearing (for x tick marks and labels)
         self.scene.left=self.scene.bottom # Left clearing (for y tick marks and labels)
-        n=self.scene.left
+        ch=self.scene.left
         bt=self.scene.bottom
         h=self.scene.h
-        self.scene.addLine(float(n-1),float(h-bt),float(n-1),10.0) # Y-axis
-        self.scene.addLine(float(n-1),float(h-bt-1),float(len(dataset)+10),float(h-bt-1)) # X-axis
+        self.scene.addLine(float(ch-1),float(h-bt),float(ch-1),10.0) # Y-axis
+        self.scene.addLine(float(ch-1),float(h-bt-1),float(len(dataset)+10),float(h-bt-1)) # X-axis
         # Scales the spectra to fit with the size of the graphicsview
         fact=1.0
         fact=(h-bt-10)/max(dataset)
-        prevch=0
-        for ch in dataset:
+        prevvalue=0
+        for chvalue in dataset:
             # TODO: User selectable type of plot
        #     self.scene.addLine(float(n),float(h-bt),float(n),(h-bt-fact*ch))
        #     self.scene.addLine(float(n),float(h-(bt+4)-fact*ch),float(n),(h-bt-fact*ch))
-            self.scene.addLine(float(n),float(h-bt-fact*prevch),float(n+1),(h-bt-fact*ch))
-            prevch=ch
-            n+=1
-        self.scene.end=n-1
+            self.scene.addLine(float(ch),float(h-bt-fact*prevvalue),float(ch+1),(h-bt-fact*chvalue))
+            prevvalue=chvalue
+            ch+=1
+        self.scene.end=ch-1
         tickval=self.tickinterval
         s = QgsSettings()
         layername=self.dlg.qgLayer.currentText()
@@ -295,7 +295,7 @@ class qgisSpectre:
         #self.scene.unit=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_unit",s.value(self.pluginname+"/defaultunit", 0))
         acalib=self.scene.acalib
         bcalib=self.scene.bcalib
-        maxval=acalib*n+bcalib
+        maxval=acalib*ch+bcalib
         tickdist=tickval
         #if maxval/n > 5:             # Avoids to tight numbering. 
         #    tickdist*=2 # Needs some better vay of doing this - 
@@ -416,6 +416,9 @@ class qgisSpectre:
         s.setValue(self.pluginname+"/"+layername+"_"+fieldname+"_a", self.scene.acalib)
         s.setValue(self.pluginname+"/"+layername+"_"+fieldname+"_b", self.scene.bcalib)
         s.setValue(self.pluginname+"/"+layername+"_"+fieldname+"_unit", self.scene.unit)
+    
+    def updateUnit(self):
+        self.scene.unit=self.dlg.leUnit.text()
         
     def run(self):
         """Run method that loads and starts the plugin"""
@@ -453,6 +456,7 @@ class qgisSpectre:
             self.dlg.pBUseDefault.clicked.connect(self.usedefault)
             self.dlg.pBSaveCalib.clicked.connect(self.saveCalibration)
             self.dlg.pBSave.clicked.connect(self.view.saveImage)
+            self.dlg.leUnit.textChanged.connect(self.updateUnit)
             
             # connect to provide cleanup on closing of dockwidget
             self.dlg.closingPlugin.connect(self.onClosePlugin)
@@ -467,6 +471,7 @@ class qgisSpectre:
             self.dlg.leB.textChanged['QString'].connect(self.updatecalib)
             self.findselected()
             
+        
                 
 class MouseReadGraphicsView(QGraphicsView):
     """ A class based on QGraphicsView to enable capture of mouse events"""
@@ -475,7 +480,7 @@ class MouseReadGraphicsView(QGraphicsView):
         self.iface = iface
         QGraphicsView.__init__(self)
         self.linex=0
-    #TODO: Use arrowkeys to move marker up and down in spectra
+    #DONE: Use arrowkeys to move marker up and down in spectra
         
     
     def drawline(self):
@@ -485,10 +490,13 @@ class MouseReadGraphicsView(QGraphicsView):
         scene=self.scene()
         x=self.linex
         ch=x-scene.left
-        
+        unit=scene.unit
         energy=ch*scene.acalib+scene.bcalib
         # DONE: draw a vertical line where clicked. Mark energy
-        message="{} keV (n={})".format(int(energy),self.spectreval[int(ch)])
+        if unit == 'Ch':
+            message="{} {} (n={})".format(unit,int(energy),self.spectreval[int(ch)])
+        else:
+            message="{} {} (n={})".format(int(energy),unit,self.spectreval[int(ch)])
         if self.scene().crdtext is not None:
             self.scene().removeItem(self.scene().crdtext)
         if self.scene().markerline is not None:
@@ -540,7 +548,6 @@ class MouseReadGraphicsView(QGraphicsView):
     def mousePressEvent(self, event):
         """ Press the left mouse button to draw a line and print the energy at the point"""
         
-        #DONE: Show n at line
         if event.button() == 1:
             if self.scene is None or self.scene().left is None: # Not yet initialized
                 return
@@ -548,5 +555,5 @@ class MouseReadGraphicsView(QGraphicsView):
             x = coords.x()
             self.linex=x
             # Make sure the data not is read out when being outside the spectra
-            if x not is None and x > self.scene().left and x < self.scene().end:
+            if x is not None and x > self.scene().left and x < self.scene().end:
                 self.drawline()
