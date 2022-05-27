@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>306</width>
+    <width>268</width>
     <height>342</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>250</width>
+    <height>342</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Spectre &amp;Viewer</string>
@@ -105,7 +111,7 @@
         <item>
          <widget class="QPushButton" name="pBPeakDetection">
           <property name="text">
-           <string>Detect peaks</string>
+           <string>Detect</string>
           </property>
          </widget>
         </item>
@@ -113,6 +119,12 @@
       </item>
       <item>
        <widget class="QCheckBox" name="cbLog">
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>30</height>
+         </size>
+        </property>
         <property name="text">
          <string>Log Scale</string>
         </property>
@@ -120,6 +132,12 @@
       </item>
       <item>
        <widget class="QLabel" name="label">
+        <property name="maximumSize">
+         <size>
+          <width>250</width>
+          <height>16777215</height>
+         </size>
+        </property>
         <property name="text">
          <string>Calibration coefficients : y=A*ch+B</string>
         </property>

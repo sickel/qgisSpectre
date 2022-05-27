@@ -326,6 +326,10 @@ class qgisSpectre:
 
     
     def detectpeaks(self):
+        # TODO: Another color for marker
+        # TODO: Recalculate peak with correct baseline
+        # TODO: Calculate peaks on smoothed spectrum
+        # TODO: Print channel# or energy
         spectre=self.view.spectreval
         x=list(range(len(spectre)))
         window = int(self.dlg.leWindow.text())
@@ -338,7 +342,16 @@ class qgisSpectre:
             except:
                 # THis is not good at all!
                 pass
+        if hasattr(self.scene,'peaktexts'):
+            try:
+                for pt in self.scene.peaktexts:
+                    self.scene.removeItem(pt)
+            except:
+                # THis is not good at all!
+                pass
+            
         self.scene.peaklines=[]
+        self.scene.peaktexts=[]
         bt=self.scene.bottom
         h=self.scene.h
         maxval=max(spectre)
@@ -348,14 +361,21 @@ class qgisSpectre:
         
         for(x,y) in self.peaks:
             n=spectre[int(x)]
+            y=n
             if self.dlg.cbLog.isChecked():
                 if n==0:
                     n=0.9
-                n=math.log(n)-math.log(0.9)
+                y=math.log(n)-math.log(0.9)
             ycoord = h-bt-fact*n
             xcoord = float(self.scene.left+x)
             pl=self.scene.addLine(xcoord,ycoord-10,xcoord,ycoord+10)
             self.scene.peaklines.append(pl)
+            try:
+                xval = x*self.scene.acalib+self.scene.bcalib
+            except:
+                xval = x
+            pt = self.scene.addText(str(round(xval,1)))
+            pt.setPos(xcoord+1,ycoord-15)
         print(self.peaks)
 
     def updatecalib(self):
