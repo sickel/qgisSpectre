@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>306</width>
-    <height>321</height>
+    <height>342</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -55,18 +55,39 @@
        </layout>
       </item>
       <item>
-       <widget class="QPushButton" name="pBCopy">
-        <property name="text">
-         <string>Copy</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QPushButton" name="pBSave">
+          <property name="text">
+           <string>Save image</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pBCopy">
+          <property name="text">
+           <string>Copy data</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
-       <widget class="QPushButton" name="pBSave">
-        <property name="text">
-         <string>Save image</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QLineEdit" name="lePeakWidth"/>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lePeakHeight"/>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pBPeakDetection">
+          <property name="text">
+           <string>Detect peaks</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="QCheckBox" name="cbLog">

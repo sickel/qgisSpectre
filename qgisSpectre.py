@@ -310,7 +310,29 @@ class qgisSpectre:
         text.setPos(self.scene.end+15,280)
         ntext=self.scene.addText("n = {}".format(str(self.view.n)))
         ntext.setPos(self.scene.end+50,1)
-        
+    
+    def peak_finder(self,x0, y0, window_size, peak_threshold):
+        import numpy    
+        # extend x, y using window size
+        y = numpy.concatenate([y0, numpy.repeat(y0[-1], window_size)])
+        x = numpy.concatenate([x0, numpy.arange(x0[-1], x0[-1]+window_size)])
+        local_max = numpy.zeros(len(x0))
+        for ii in range(len(x0)):
+            local_max[ii] = x[y[ii:(ii + window_size)].argmax() + ii]
+
+        u, c = numpy.unique(local_max, return_counts=True)
+        i_return = numpy.where(c>=peak_threshold)[0]
+        return(list(zip(u[i_return], c[i_return])))
+
+    
+    def detectpeaks(self):
+        spectre=self.view.spectreval
+        x=list(range(len(spectre)))
+        self.peaks=self.peak_finder(x,spectre,30,25)
+        for(x,y) in self.peaks:
+            self.scene.addLine(float(self.scene.left+x),0,float(self.scene.left+x),300)
+        print(self.peaks)
+
     def updatecalib(self):
         """ Prepares newly typed in  calibration values for use """
         self.dlg.cbDefault.setChecked(False)
@@ -457,6 +479,7 @@ class qgisSpectre:
             self.dlg.pBUseDefault.clicked.connect(self.usedefault)
             self.dlg.pBSaveCalib.clicked.connect(self.saveCalibration)
             self.dlg.pBSave.clicked.connect(self.view.saveImage)
+            self.dlg.pBPeakDetection.clicked.connect(self.detectpeaks)
             self.dlg.leUnit.textChanged.connect(self.updateUnit)
             
             # connect to provide cleanup on closing of dockwidget
