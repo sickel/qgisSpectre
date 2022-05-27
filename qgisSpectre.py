@@ -218,7 +218,7 @@ class qgisSpectre:
 
         for action in self.actions:
             self.iface.removePluginVectorMenu(
-                self.tr(u'&Spectre Viewer'),
+                self.tr(u'&View Spectra'),
                 action)
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
@@ -328,9 +328,34 @@ class qgisSpectre:
     def detectpeaks(self):
         spectre=self.view.spectreval
         x=list(range(len(spectre)))
-        self.peaks=self.peak_finder(x,spectre,30,25)
+        window = int(self.dlg.leWindow.text())
+        treshold = int(self.dlg.leTreshold.text())
+        self.peaks=self.peak_finder(x,spectre,window,treshold)
+        if hasattr(self.scene,'peaklines'):
+            try:
+                for pl in self.scene.peaklines:
+                    self.scene.removeItem(pl)
+            except:
+                # THis is not good at all!
+                pass
+        self.scene.peaklines=[]
+        bt=self.scene.bottom
+        h=self.scene.h
+        maxval=max(spectre)
+        if self.dlg.cbLog.isChecked():
+            maxval=math.log(maxval)-math.log(0.9)
+        fact=(h-bt-10)/maxval
+        
         for(x,y) in self.peaks:
-            self.scene.addLine(float(self.scene.left+x),0,float(self.scene.left+x),300)
+            n=spectre[int(x)]
+            if self.dlg.cbLog.isChecked():
+                if n==0:
+                    n=0.9
+                n=math.log(n)-math.log(0.9)
+            ycoord = h-bt-fact*n
+            xcoord = float(self.scene.left+x)
+            pl=self.scene.addLine(xcoord,ycoord-10,xcoord,ycoord+10)
+            self.scene.peaklines.append(pl)
         print(self.peaks)
 
     def updatecalib(self):
