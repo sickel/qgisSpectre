@@ -32,6 +32,7 @@ import qgis.PyQt.QtCore
 from qgis.PyQt.QtGui import QIcon, QImage, QPainter
 from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication,QGraphicsView,QCheckBox, QFileDialog
 from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QColor
 # Initialize Qt resources from file resources.py
 from .resources import *
 from operator import add # To add spectra
@@ -329,7 +330,7 @@ class qgisSpectre:
         # TODO: Another color for marker
         # TODO: Recalculate peak with correct baseline
         # TODO: Calculate peaks on smoothed spectrum
-        # TODO: Print channel# or energy
+        # DONE: Print channel# or energy
         spectre=self.view.spectreval
         x=list(range(len(spectre)))
         window = int(self.dlg.leWindow.text())
@@ -358,7 +359,7 @@ class qgisSpectre:
         if self.dlg.cbLog.isChecked():
             maxval=math.log(maxval)-math.log(0.9)
         fact=(h-bt-10)/maxval
-        
+        bluepen = QPen(QBrush(QColor(0,0,255,100)), 2, Qt.DashLine)
         for(x,y) in self.peaks:
             n=spectre[int(x)]
             y=n
@@ -368,7 +369,7 @@ class qgisSpectre:
                 y=math.log(n)-math.log(0.9)
             ycoord = h-bt-fact*n
             xcoord = float(self.scene.left+x)
-            pl=self.scene.addLine(xcoord,ycoord-10,xcoord,ycoord+10)
+            pl=self.scene.addLine(xcoord,ycoord-10,xcoord,ycoord+10,bluepen)
             self.scene.peaklines.append(pl)
             try:
                 xval = x*self.scene.acalib+self.scene.bcalib
