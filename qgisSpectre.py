@@ -109,7 +109,7 @@ class qgisSpectre:
         callback,
         enabled_flag=True,
         add_to_menu=True,
-        add_to_toolbar=True,
+        add_to_toolbar=False,
         status_tip = None,
         whats_this = None,
         parent=None):
@@ -219,7 +219,7 @@ class qgisSpectre:
 
         for action in self.actions:
             self.iface.removePluginVectorMenu(
-                self.tr(u'&View Spectra'),
+                self.tr(u'Spectral data'),
                 action)
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
@@ -256,7 +256,7 @@ class qgisSpectre:
         #DONE: Save as file 
         #DONE: export data to clipboard
         #TODO: export image to clipboard
-        #TODO: Peak detection
+        #DONE: Peak detection
         #TODO: Save different set of calibration values
         
         self.scene.h=300 # Height of stage
@@ -327,9 +327,10 @@ class qgisSpectre:
 
     
     def detectpeaks(self):
-        # TODO: Another color for marker
+        # DONE: Another color for marker
         # TODO: Recalculate peak with correct baseline
         # TODO: Calculate peaks on smoothed spectrum
+        # TODO: Find nuclides with correct energy
         # DONE: Print channel# or energy
         spectre=self.view.spectreval
         x=list(range(len(spectre)))
@@ -339,14 +340,16 @@ class qgisSpectre:
         if hasattr(self.scene,'peaklines'):
             try:
                 for pl in self.scene.peaklines:
-                    self.scene.removeItem(pl)
+                    if pl.scene==self.scene:
+                        self.scene.removeItem(pl)
             except:
                 # THis is not good at all!
                 pass
         if hasattr(self.scene,'peaktexts'):
             try:
                 for pt in self.scene.peaktexts:
-                    self.scene.removeItem(pt)
+                    if pt.scene == self.scene:
+                        self.scene.removeItem(pt)
             except:
                 # THis is not good at all!
                 pass
@@ -367,7 +370,8 @@ class qgisSpectre:
                 if n==0:
                     n=0.9
                 y=math.log(n)-math.log(0.9)
-            ycoord = h-bt-fact*n
+            ycoord = h-bt-fact*y
+            print(ycoord)
             xcoord = float(self.scene.left+x)
             pl=self.scene.addLine(xcoord,ycoord-10,xcoord,ycoord+10,bluepen)
             self.scene.peaklines.append(pl)
@@ -572,7 +576,7 @@ class MouseReadGraphicsView(QGraphicsView):
         if self.scene().markerline is not None:
             self.scene().removeItem(self.scene().markerline)
         self.scene().crdtext=self.scene().addText(message)
-        self.scene().crdtext.setPos(x,20)
+        self.scene().crdtext.setPos(x,2)
         self.scene().markerline=self.scene().addLine(x,0,x,300-(scene.bottom+5))
     
     def keyPressEvent(self,event):

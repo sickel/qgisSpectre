@@ -6,13 +6,13 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>268</width>
+    <width>315</width>
     <height>342</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>250</width>
+    <width>315</width>
     <height>342</height>
    </size>
   </property>
@@ -26,183 +26,213 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <layout class="QHBoxLayout" name="hlMain" stretch="1">
+   <layout class="QHBoxLayout" name="hlMain" stretch="0">
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <property name="sizeConstraint">
-       <enum>QLayout::SetMaximumSize</enum>
+     <widget class="QGroupBox" name="groupBox">
+      <property name="enabled">
+       <bool>true</bool>
       </property>
-      <item>
-       <layout class="QHBoxLayout" name="hlMain" stretch="1,5">
-        <item>
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Layer : </string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QgsMapLayerComboBox" name="qgLayer"/>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="hlMain" stretch="1,5">
-        <item>
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Field : </string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QgsFieldComboBox" name="qgField"/>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="QPushButton" name="pBSave">
-          <property name="text">
-           <string>Save image</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pBCopy">
-          <property name="text">
-           <string>Copy data</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>Wnd</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="leWindow">
-          <property name="text">
-           <string>30</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_3">
-          <property name="text">
-           <string>Tsh</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="leTreshold">
-          <property name="text">
-           <string>30</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pBPeakDetection">
-          <property name="text">
-           <string>Detect</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="cbLog">
-        <property name="maximumSize">
-         <size>
-          <width>200</width>
-          <height>30</height>
-         </size>
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>300</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="title">
+       <string/>
+      </property>
+      <widget class="QWidget" name="">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>283</width>
+         <height>298</height>
+        </rect>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetMaximumSize</enum>
         </property>
-        <property name="text">
-         <string>Log Scale</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label">
-        <property name="maximumSize">
-         <size>
-          <width>250</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Calibration coefficients : y=A*ch+B</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="hlCalib1">
+        <item>
+         <layout class="QHBoxLayout" name="hlMain" stretch="1,5">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Layer : </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QgsMapLayerComboBox" name="qgLayer"/>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="hlMain" stretch="1,5">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Field : </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QgsFieldComboBox" name="qgField"/>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QPushButton" name="pBSave">
+            <property name="text">
+             <string>Save image</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pBCopy">
+            <property name="text">
+             <string>Copy data</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Wnd</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="leWindow">
+            <property name="text">
+             <string>30</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>Tsh</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="leTreshold">
+            <property name="text">
+             <string>30</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pBPeakDetection">
+            <property name="text">
+             <string>Detect</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="cbLog">
+          <property name="maximumSize">
+           <size>
+            <width>200</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Log Scale</string>
+          </property>
+         </widget>
+        </item>
         <item>
          <widget class="QLabel" name="label">
+          <property name="maximumSize">
+           <size>
+            <width>250</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
-           <string>A: </string>
+           <string>Calibration coefficients : y=A*ch+B</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="leA"/>
+         <layout class="QHBoxLayout" name="hlCalib1">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>A: </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="leA"/>
+          </item>
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>B: </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="leB"/>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pBUseDefault">
+            <property name="text">
+             <string>Use default</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>B: </string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="leB"/>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pBUseDefault">
-          <property name="text">
-           <string>Use default</string>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="hlCalib2">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Unit:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="leUnit"/>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="cbDefault">
+            <property name="text">
+             <string>Set default</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pBSaveCalib">
+            <property name="text">
+             <string>Save</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="hlCalib2">
-        <item>
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Unit:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="leUnit"/>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="cbDefault">
-          <property name="text">
-           <string>Set default</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pBSaveCalib">
-          <property name="text">
-           <string>Save</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
+      </widget>
+     </widget>
     </item>
    </layout>
   </widget>
