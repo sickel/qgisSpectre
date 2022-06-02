@@ -229,6 +229,7 @@ class qgisSpectre:
     def drawspectra(self,data=None):
         """ Drawing the spectra on the graphicsstage """
         if data is None:
+            spectrepen=QPen(Qt.black)
             layername=self.dlg.qgLayer.currentText()
             fieldname=self.dlg.qgField.currentText()
             layer=self.dlg.qgLayer.currentLayer()
@@ -274,7 +275,9 @@ class qgisSpectre:
                 # Ticklines
                 text=self.scene.addText(str(tickval))
                 text.setPos(tickch+left-40, 280)
-                tickval+=tickdist    
+                tickval+=tickdist
+        else:
+            spectrepen=QPen(Qt.red)
         logscale=self.dlg.cbLog.isChecked()
         if logscale:
             dataset=[]
@@ -311,7 +314,7 @@ class qgisSpectre:
             # TODO: User selectable type of plot
        #     self.scene.addLine(float(n),float(h-bt),float(n),(h-bt-fact*ch))
        #     self.scene.addLine(float(n),float(h-(bt+4)-fact*ch),float(n),(h-bt-fact*ch))
-            self.scene.addLine(float(ch),float(h-bt-fact*prevvalue),float(ch+1),(h-bt-fact*chvalue))
+            self.scene.addLine(float(ch),float(h-bt-fact*prevvalue),float(ch+1),(h-bt-fact*chvalue),spectrepen)
             prevvalue=chvalue
             ch+=1
         self.scene.end=ch-1
@@ -500,13 +503,18 @@ class qgisSpectre:
     
     def spectreFromClipboard(self):
         clipboard = QApplication.clipboard()
-        text = clipboard.text()
-        spectre = text.split(",")
-        if len(spectre) > 10:
-            self.drawspectre(spectre)
-        # Check if the input makes sense,
-        # If so, call self.drawspectre(dataset)
-    
+        try:
+            text = clipboard.text()
+            textspec= text.split(",")
+            if len(textspec) > 10:
+                spectre=[float(x) for x in textspec]
+                self.drawspectra(spectre)
+            # Check if the input makes sense,
+            # If so, call self.drawspectre(dataset)
+        except:
+            self.iface.messageBar().pushMessage(
+                    "Warning", "Invalid data pasted",
+                    level=Qgis.Warning, duration=3)
     def saveCalibration(self):
         """ Saves the calibration data """
         layername=self.dlg.qgLayer.currentText()
