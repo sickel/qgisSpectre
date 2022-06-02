@@ -5,14 +5,7 @@ This plugin allows viewing of spectra recorded with geographical information. Us
 
 To use this:
 
-* create a postgis enabled postgresql database
-* create a table in the database using schema.sql
-* Set the correct connection parameters in readdata.py
-* Import a csv-file exported from RSI radassist using readdata.py. It must contain the base data and the virtual detector spectra
-
-Spectra data from other systems may also be used. Use readdata.py or readspe.py as a template for writing a new import function. As both these are storing data using the postgresql array field type, it will not work in any other data base systems I know of. 
-
-To store it in other systems, store the spectre as a comma separated string.
+Store spectra for each location either as an array (eg in postGIS) or as a comma separated integer set
 
 
 See also:
@@ -36,14 +29,5 @@ One set is a gpkg file that can be used directly in QGIS, the other is a databas
 
 Load the data into QGIS and select the field specstring or spectre (The latter only exists in the postgis version) in the spectre viewer and select some points from the dataset to see the spectre.
 
-Status:
 
-The present release is considered a beta release. Some code cleaning will be done before releasing 1.0
-
-Selected TODOs:
-
-- Copy spectra to clipboard - Done, as comma separated channel values
-- Show more specra simultaneously - May look into this after v 1.0. 
-- Use a custom scale on the y-axis - May look into this after v 1.0.
-- List only relevant (i.e. array and strings) columns in the column selector
 
