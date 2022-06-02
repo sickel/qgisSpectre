@@ -5,8 +5,8 @@
 [general]
 name=Spectre Viewer
 qgisMinimumVersion=3.0
-description=View spectra stored in a geodataset. The spectral data must be stored in an array, e.g. as an postgres array datafield or as a comma separated string. When features in the dataset are selected, the integrated spectra over these features will be displayed. Click in spectra to read out values. Use arrowkeys to move.
-version=0.95
+description=View spectra stored in a geodataset. The spectral data must be stored in an array, e.g. as an postgres array datafield or as a comma separated string. When features in the dataset are selected, the integrated spectra over these features will be displayed. Click in spectra to read out values. Use arrowkeys to move. Spectre values can be copied and pasted as a comma separated string of integers. Simple peak detection.
+version=1.0
 author=Morten Sickel
 email=morten@sickel.net
  
@@ -20,7 +20,7 @@ Recommended items: Stripchart
  
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=Fixed up som UI issues
+changelog=Updated UI, peak detection, paste spectra
  
 # Tags are comma separated with spaces allowed
 tags=gamma monitoring,radiation,Spectrometry
