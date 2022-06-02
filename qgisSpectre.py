@@ -45,6 +45,7 @@ from .qgisSpectre_dockwidget import qgisSpectreDockWidget
 import os.path
 import math 
 import json
+import yaml
 
 class qgisSpectre:
     """QGIS Plugin Implementation."""
@@ -225,26 +226,65 @@ class qgisSpectre:
         # remove the toolbar
         del self.toolbar
     
-    def drawspectra(self):
+    def drawspectra(self,data=None):
         """ Drawing the spectra on the graphicsstage """
-        layername=self.dlg.qgLayer.currentText()
-        fieldname=self.dlg.qgField.currentText()
-        layer=self.dlg.qgLayer.currentLayer()
-        if layer==None:
-            return # Happens some times, just as well to return
-        self.scene.acalib=float(self.dlg.leA.text())
-        self.scene.bcalib=float(self.dlg.leB.text())
-        self.updateUnit()
+        if data is None:
+            layername=self.dlg.qgLayer.currentText()
+            fieldname=self.dlg.qgField.currentText()
+            layer=self.dlg.qgLayer.currentLayer()
+            if layer==None:
+                return # Happens some times, just as well to return
+            self.scene.acalib=float(self.dlg.leA.text())
+            self.scene.bcalib=float(self.dlg.leB.text())
+            self.updateUnit()
+            data=self.view.spectreval
+            # Prepares background and axis
+            self.scene.h=300 # Height of scene
+            self.scene.clear()
+            self.scene.crdtext=None
+            self.scene.markerline=None
+            backgroundbrush=QBrush(Qt.white)
+            outlinepen=QPen(Qt.white)
+            # Needs this when saving as png, or background from map will shine through
+            self.scene.addRect(0,0,1200,300,outlinepen,backgroundbrush) 
+            self.scene.bottom=20 # Bottom clearing (for x tick marks and labels)
+            self.scene.left=self.scene.bottom # Left clearing (for y tick marks and labels)
+            left=self.scene.left
+            h=self.scene.h
+            bt=self.scene.bottom
+            # Y-axis:
+            self.scene.addLine(float(self.scene.left-1),float(h-bt),float(left-1),10.0) 
+            # X-axis:
+            self.scene.addLine(float(left-1),float(h-bt-1),float(len(data)+10),float(h-bt-1)) 
+            acalib=self.scene.acalib
+            bcalib=self.scene.bcalib
+            maxval=acalib*len(data)+bcalib
+            tickval=self.tickinterval
+            tickval = round(maxval/10)
+            # set up some not too bad tick values. This will for a typical spectre
+            # going a bit beyond 3000 keV give a tick distance of 300. Should try
+            # to get 250 in stead. - there must be some standard algorithm for this
+            # TODO: Fix better tick values
+            oom=10**math.floor(math.log10(tickval))
+            tickval=round(tickval/oom)*oom
+            tickdist=tickval
+            while tickval < maxval:
+                tickch=(tickval-bcalib)/acalib+left
+                self.scene.addLine(float(tickch),float(h-bt),float(tickch),float(h-bt+5)) 
+                # Ticklines
+                text=self.scene.addText(str(tickval))
+                text.setPos(tickch+left-40, 280)
+                tickval+=tickdist    
         logscale=self.dlg.cbLog.isChecked()
         if logscale:
             dataset=[]
-            for ch in self.view.spectreval:
+            for ch in data:
                 if ch==0:
                     ch=0.9
                 dataset.append(math.log(ch)-math.log(0.9))
                 # 0.9 offset and back to be able to plot zero-values
         else:
-            dataset=self.view.spectreval
+            dataset=data
         
         #DONE: Add x and y axis
         #DONE: Add scale factors to scale x axis from channel number to keV
@@ -256,28 +296,17 @@ class qgisSpectre:
         #DONE: Save as file 
         #DONE: export data to clipboard
         #TODO: export image to clipboard
+        #TODO: Paste in a spectre copied spectre (i.e. commaseparated list) to show a second spectre 
         #DONE: Peak detection
         #TODO: Save different set of calibration values
         
-        self.scene.h=300 # Height of stage
-        self.scene.clear()
-        self.scene.crdtext=None
-        self.scene.markerline=None
-        backgroundbrush=QBrush(Qt.white)
-        outlinepen=QPen(Qt.white)
-        # Needs this when saving as png, or background from map will shine through
-        self.scene.addRect(0,0,1200,300,outlinepen,backgroundbrush) 
-        self.scene.bottom=20 # Bottom clearing (for x tick marks and labels)
-        self.scene.left=self.scene.bottom # Left clearing (for y tick marks and labels)
-        ch=self.scene.left
+        # Scales the spectra to fit with the size of the graphicsview
         bt=self.scene.bottom
         h=self.scene.h
-        self.scene.addLine(float(ch-1),float(h-bt),float(ch-1),10.0) # Y-axis
-        self.scene.addLine(float(ch-1),float(h-bt-1),float(len(dataset)+10),float(h-bt-1)) # X-axis
-        # Scales the spectra to fit with the size of the graphicsview
         fact=1.0
         fact=(h-bt-10)/max(dataset)
         prevvalue=0
+        ch=self.scene.left
         for chvalue in dataset:
             # TODO: User selectable type of plot
        #     self.scene.addLine(float(n),float(h-bt),float(n),(h-bt-fact*ch))
@@ -286,7 +315,6 @@ class qgisSpectre:
             prevvalue=chvalue
             ch+=1
         self.scene.end=ch-1
-        tickval=self.tickinterval
         s = QgsSettings()
         layername=self.dlg.qgLayer.currentText()
         fieldname=self.dlg.qgField.currentText()
@@ -294,24 +322,14 @@ class qgisSpectre:
         #acalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_a",s.value(self.pluginname+"/defaulta", 1))
         #bcalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_b",s.value(self.pluginname+"/defaultb", 0))
         #self.scene.unit=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_unit",s.value(self.pluginname+"/defaultunit", 0))
-        acalib=self.scene.acalib
-        bcalib=self.scene.bcalib
-        maxval=acalib*ch+bcalib
-        tickdist=tickval
-        #if maxval/n > 5:             # Avoids to tight numbering. 
-        #    tickdist*=2 # Needs some better vay of doing this - 
-        left=self.scene.left
-        while tickval < maxval:
-            tickch=(tickval-bcalib)/acalib+left
-            self.scene.addLine(float(tickch),float(h-bt),float(tickch),float(h-bt+5)) # Ticklines
-            text=self.scene.addText(str(tickval))
-            text.setPos(tickch+left-40, 280)
-            tickval+=tickdist
+        
         text=self.scene.addText(self.scene.unit)
         text.setPos(self.scene.end+15,280)
         ntext=self.scene.addText("n = {}".format(str(self.view.n)))
         ntext.setPos(self.scene.end+50,1)
-    
+        if self.dlg.cBautodetect.isChecked():
+            self.detectpeaks()
+            
     def peak_finder(self,x0, y0, window_size, peak_threshold):
         import numpy    
         # extend x, y using window size
@@ -480,6 +498,14 @@ class qgisSpectre:
         
         # TODO: Make a graphical copy
     
+    def spectreFromClipboard(self):
+        clipboard = QApplication.clipboard()
+        text = clipboard.text()
+        spectre = text.split(",")
+        if len(spectre) > 10:
+            self.drawspectre(spectre)
+        # Check if the input makes sense,
+        # If so, call self.drawspectre(dataset)
     
     def saveCalibration(self):
         """ Saves the calibration data """
@@ -492,7 +518,13 @@ class qgisSpectre:
     
     def updateUnit(self):
         self.scene.unit=self.dlg.leUnit.text()
+
+    def resolve(self,name, basepath=None):
+        if not basepath:
+            basepath = os.path.dirname(os.path.realpath(__file__))
+        return os.path.join(basepath, name)
         
+    
     def run(self):
         """Run method that loads and starts the plugin"""
         if not self.pluginIsActive:
@@ -526,6 +558,7 @@ class qgisSpectre:
             # DONE: Repopulate when layers are added or removed
             # DONE both by using qgisWidget
             self.dlg.pBCopy.clicked.connect(self.spectreToClipboard)
+            self.dlg.pBPaste.clicked.connect(self.spectreFromClipboard)
             self.dlg.pBUseDefault.clicked.connect(self.usedefault)
             self.dlg.pBSaveCalib.clicked.connect(self.saveCalibration)
             self.dlg.pBSave.clicked.connect(self.view.saveImage)
@@ -544,9 +577,16 @@ class qgisSpectre:
             self.dlg.leA.textChanged['QString'].connect(self.updatecalib)
             self.dlg.leB.textChanged['QString'].connect(self.updatecalib)
             self.findselected()
+            try:
+                with open(self.resolve('gammas.yml')) as stream:
+                    self.gammas=yaml.safe_load(stream)
+            except FileNotFoundError:
+                self.gammas={}
+            #self.gammaenergies={}
+            #for nuk in self.gammas:
+            #    for energy in self.gammas[nuk]
+            #        self.
             
-        
-                
 class MouseReadGraphicsView(QGraphicsView):
     """ A class based on QGraphicsView to enable capture of mouse events"""
     
