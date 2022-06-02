@@ -293,13 +293,13 @@ class qgisSpectre:
         #DONE: Add scale factors to scale x axis from channel number to keV
         #DONE: Add settings to have custom unit
         #TODO: Custom scales
-        #TODO: Keep spectra to compare
+        #DONE: Keep spectra to compare - i.e. paste spectra
         #DONE: Draw spectra as line, not "line-histogram"
         #TODO: Select different drawing styles
         #DONE: Save as file 
         #DONE: export data to clipboard
         #TODO: export image to clipboard
-        #TODO: Paste in a spectre copied spectre (i.e. commaseparated list) to show a second spectre 
+        #DONE: Paste in a spectre copied spectre (i.e. commaseparated list) to show a second spectre 
         #DONE: Peak detection
         #TODO: Save different set of calibration values
         
@@ -331,7 +331,7 @@ class qgisSpectre:
         ntext=self.scene.addText("n = {}".format(str(self.view.n)))
         ntext.setPos(self.scene.end+50,1)
         if self.dlg.cBautodetect.isChecked():
-            self.detectpeaks()
+            self.detectpeaks(data)
             
     def peak_finder(self,x0, y0, window_size, peak_threshold):
         import numpy    
@@ -347,13 +347,14 @@ class qgisSpectre:
         return(list(zip(u[i_return], c[i_return])))
 
     
-    def detectpeaks(self):
+    def detectpeaks(self,spectre=None):
         # DONE: Another color for marker
         # TODO: Recalculate peak with correct baseline
         # TODO: Calculate peaks on smoothed spectrum
         # TODO: Find nuclides with correct energy
         # DONE: Print channel# or energy
-        spectre=self.view.spectreval
+        if spectre is None:
+            spectre=self.view.spectreval
         x=list(range(len(spectre)))
         window = int(self.dlg.leWindow.text())
         treshold = int(self.dlg.leTreshold.text())
