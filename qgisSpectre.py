@@ -345,20 +345,81 @@ class qgisSpectre:
         u, c = numpy.unique(local_max, return_counts=True)
         i_return = numpy.where(c>=peak_threshold)[0]
         return(list(zip(u[i_return], c[i_return])))
-
     
+    
+    def smoothsum(self,s,m):
+        smoothed=[]
+        lastch=len(s)
+        for ch in range(len(s)):
+            tot=0
+            for i in range(-1*m,m+1):
+            #    print(ch,i,ch+i,tot)
+                try:
+                    if ch+i < 0 or s[ch+i] is None:
+                        tot=None
+                        break
+                    else:
+                        tot += s[ch+i]
+                except IndexError:
+                    tot=None
+                    break
+            #print(f"------{tot}")
+            smoothed.append(tot)
+        return(smoothed)
+    
+    def peak_finder_mar(self,x,y,window,treshold):
+        print("Mariscotti")
+        # Using Mariscotti’s second difference method
+        if window %2 == 0:
+            window += 1
+            # Need window to be an uneven number to calculate values for centroid
+        s=[] # 2nd differential
+        f=[] # sd of 2nd differetial
+        lastch=len(y)-1
+        for ch in range(len(y)):
+            if ch > 0 and ch < lastch:
+                s.append(y[ch-1]-2*y[ch]+y[ch+1])
+                f.append(math.sqrt(y[ch-1]+4*y[ch]+y[ch+1]))
+            else:
+                s.append(None)
+                f.append(None)
+        m = window // 2
+        for i in range(5):
+            # Does a five times sum smoothing
+            s=self.smoothsum(s,m)
+        peak=[]
+        peakstart=0
+        peaks=[]
+        peakranges=[]
+        for ch in range(len(s)):
+            if peak != []:
+                # A peak may end into the Nulls at the end
+                if s[sh] is None or s[ch] > 0:
+                    # Peak has finished
+                    minval = min(peak)
+                    minch = peak.index(minval)+peakstart+1
+                    peaks.append(minch)
+                    peakranges.append([peakstart,peakstart+len(peak)])
+                    peak = []
+            if s[ch] is not None and s[ch] < 0:
+                if peak == []:
+                    peakstart=ch
+                peak.append(s[ch])
+        return(list(zip(peaks, peakranges)))
+    
+        
     def detectpeaks(self,spectre=None):
         # DONE: Another color for marker
         # TODO: Recalculate peak with correct baseline
         # TODO: Calculate peaks on smoothed spectrum
         # TODO: Find nuclides with correct energy
         # DONE: Print channel# or energy
-        if spectre is None:
+        if spectre is None or not spectre:
             spectre=self.view.spectreval
         x=list(range(len(spectre)))
         window = int(self.dlg.leWindow.text())
         treshold = int(self.dlg.leTreshold.text())
-        self.peaks=self.peak_finder(x,spectre,window,treshold)
+        self.peaks=self.peak_finder_mar(x,spectre,window,treshold)
         if hasattr(self.scene,'peaklines'):
             try:
                 for pl in self.scene.peaklines:
