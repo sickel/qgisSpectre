@@ -368,8 +368,9 @@ class qgisSpectre:
         return(smoothed)
     
     def peak_finder_mar(self,x,y,window,treshold):
-        print("Mariscotti")
         # Using Mariscotti’s second difference method
+        # Mariscotti, M. A method for automatic identification of peaks in the presence of background and its application 
+        # to spectrum analysis. Nucl. Instrum. Methods 1967, 50, 309–320. 
         if window %2 == 0:
             window += 1
             # Need window to be an uneven number to calculate values for centroid
