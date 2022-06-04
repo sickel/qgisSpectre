@@ -332,20 +332,6 @@ class qgisSpectre:
         ntext.setPos(self.scene.end+50,1)
         if self.dlg.cBautodetect.isChecked():
             self.detectpeaks(data)
-            
-    def peak_finder(self,x0, y0, window_size, peak_threshold):
-        import numpy    
-        # extend x, y using window size
-        y = numpy.concatenate([y0, numpy.repeat(y0[-1], window_size)])
-        x = numpy.concatenate([x0, numpy.arange(x0[-1], x0[-1]+window_size)])
-        local_max = numpy.zeros(len(x0))
-        for ii in range(len(x0)):
-            local_max[ii] = x[y[ii:(ii + window_size)].argmax() + ii]
-
-        u, c = numpy.unique(local_max, return_counts=True)
-        i_return = numpy.where(c>=peak_threshold)[0]
-        return(list(zip(u[i_return], c[i_return])))
-    
     
     def smoothsum(self,s,m):
         smoothed=[]
@@ -367,7 +353,7 @@ class qgisSpectre:
             smoothed.append(tot)
         return(smoothed)
     
-    def peak_finder_mar(self,x,y,window,treshold):
+    def peak_finder(self,x,y,window,treshold):
         # Using Mariscotti’s second difference method
         # Mariscotti, M. A method for automatic identification of peaks in the presence of background and its application 
         # to spectrum analysis. Nucl. Instrum. Methods 1967, 50, 309–320. 
@@ -395,12 +381,39 @@ class qgisSpectre:
         for ch in range(len(s)):
             if peak != []:
                 # A peak may end into the Nulls at the end
-                if s[sh] is None or s[ch] > 0:
+                if s[ch] is None or s[ch] > 0:
                     # Peak has finished
+                    # Does peak refinement as in 
+                    # Sam Fearn (2022): An Open-Source Iterative python Module for the Automated Identification of Photopeaks in Photon Spectra v2.0. 
+                    # https://doi.org/10.5523/bris.n3cm8fnce5ri2k55dlipee3st
+                    
+                    pre  = sum(y[peakstart-10:peakstart])/10
+                    try:
+                        post = sum(y[ch:ch+10])/10
+                    except TypeError:
+                        # TODO: Needs to refine this. This may happen towards the end of the spectrum
+                        # TODO: Needs to handle index error 
+                        post = 0
+                    print(f"{pre},{post}")
+                    print(f"chs:{peakstart},{ch}")
+                    a = (post-pre)/(ch-peakstart)
+                    print(f"a:{a}")
+                    peakvalues=y[peakstart:ch]
+                    peakadj = []
+                    for i in range(len(peakvalues)):
+                        val=peakvalues[i]-(i*a+pre)
+                        peakadj.append(val)
+                    print(f"peakvalues:{peakvalues}")
+                    print(f"peakadj:{peakadj}")
                     minval = min(peak)
                     minch = peak.index(minval)+peakstart+1
-                    peaks.append(minch)
-                    peakranges.append([peakstart,peakstart+len(peak)])
+                    print(f"minch:{minch}")
+                    maxval = max(peakadj)
+                    maxch = peakadj.index(maxval)+peakstart+1
+                    print(f"maxch:{maxch}")
+                    # TODO: Fit a gaussian to peakadj to find peak channel
+                    peaks.append(maxch)
+                    peakranges.append([peakstart,ch-1])
                     peak = []
             if s[ch] is not None and s[ch] < 0:
                 if peak == []:
@@ -420,14 +433,14 @@ class qgisSpectre:
         x=list(range(len(spectre)))
         window = int(self.dlg.leWindow.text())
         treshold = int(self.dlg.leTreshold.text())
-        self.peaks=self.peak_finder_mar(x,spectre,window,treshold)
+        self.peaks=self.peak_finder(x,spectre,window,treshold)
         if hasattr(self.scene,'peaklines'):
             try:
                 for pl in self.scene.peaklines:
                     if pl.scene==self.scene:
                         self.scene.removeItem(pl)
             except:
-                # THis is not good at all!
+                # This is not good at all!
                 pass
         if hasattr(self.scene,'peaktexts'):
             try:
