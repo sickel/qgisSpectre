@@ -6,3 +6,5 @@ help/build
 test/postgis.sql
 test/testdata.gpkg
 zip_build/*
+.~*
+peakid
