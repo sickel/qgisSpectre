@@ -394,6 +394,12 @@ class qgisSpectre:
                         # TODO: Needs to refine this. This may happen towards the end of the spectrum
                         # TODO: Needs to handle index error 
                         post = 0
+                    except IndexError:
+                        # Trying to read past end of spectre
+                        if ch < len(y)-1:
+                            post = sum(y[ch:])/(len(y)-1-ch)
+                        else:
+                            post = 0
                     print(f"{pre},{post}")
                     print(f"chs:{peakstart},{ch}")
                     a = (post-pre)/(ch-peakstart)
@@ -405,6 +411,9 @@ class qgisSpectre:
                         peakadj.append(val)
                     print(f"peakvalues:{peakvalues}")
                     print(f"peakadj:{peakadj}")
+                    coefs = [-2,3,6,7,6,3,-2]
+                    peakadj = self.savgolsmooth(peakadj,coefs)
+                    print(f"smoothed:{peakadj}")
                     minval = min(peak)
                     minch = peak.index(minval)+peakstart+1
                     print(f"minch:{minch}")
@@ -420,6 +429,20 @@ class qgisSpectre:
                     peakstart=ch
                 peak.append(s[ch])
         return(list(zip(peaks, peakranges)))
+    
+    def savgolsmooth(self,data,coefs):
+        win = len(coefs)
+        halfwin = int((win-1)/2)
+        buff=[0] * halfwin
+        data = buff + data + buff
+        smoothed = []
+        fact= sum(coefs)
+        for i in range(halfwin,len(data)-halfwin):
+            sgsum=0
+            for j in range(-1*halfwin,halfwin+1):
+                sgsum += data[i+j] * coefs[j+halfwin]
+            smoothed.append(sgsum/fact)
+        return(smoothed)
     
         
     def detectpeaks(self,spectre=None):
