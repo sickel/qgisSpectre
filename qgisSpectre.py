@@ -447,8 +447,8 @@ class qgisSpectre:
         
     def detectpeaks(self,spectre=None):
         # DONE: Another color for marker
-        # TODO: Recalculate peak with correct baseline
-        # TODO: Calculate peaks on smoothed spectrum
+        # DONE: Recalculate peak with correct baseline
+        # DONE: Calculate peaks on smoothed spectrum
         # TODO: Find nuclides with correct energy
         # DONE: Print channel# or energy
         if spectre is None or not spectre:
@@ -457,13 +457,14 @@ class qgisSpectre:
         window = int(self.dlg.leWindow.text())
         treshold = int(self.dlg.leTreshold.text())
         self.peaks=self.peak_finder(x,spectre,window,treshold)
+        # TODO: Combine this two removeitem calls
         if hasattr(self.scene,'peaklines'):
             try:
                 for pl in self.scene.peaklines:
                     if pl.scene==self.scene:
                         self.scene.removeItem(pl)
             except:
-                # This is not good at all!
+                # Need some better handling!
                 pass
         if hasattr(self.scene,'peaktexts'):
             try:
@@ -471,7 +472,7 @@ class qgisSpectre:
                     if pt.scene == self.scene:
                         self.scene.removeItem(pt)
             except:
-                # THis is not good at all!
+                # Need some better handling!
                 pass
             
         self.scene.peaklines=[]
