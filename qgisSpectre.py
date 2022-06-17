@@ -60,6 +60,12 @@ class qgisSpectre:
         """
         # Save reference to the QGIS interface
         self.iface = iface
+        
+        self.dlg=qgisSpectreDockWidget(self.iface.mainWindow())
+        # stops it from showing up when starting QGIS
+        if self.dlg.isVisible():
+            self.dlg.close()
+        self.pluginIsActive = None
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
 
@@ -83,7 +89,6 @@ class qgisSpectre:
         self.pluginname="mortensickel_Spectrumviewer"
 
         self.view = MouseReadGraphicsView(self.iface)
-        self.pluginIsActive = False
             
         
 
@@ -179,14 +184,15 @@ class qgisSpectre:
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-
+        self.pluginIsActive = False
         icon_path = ':/plugins/qgisSpectre/icon.png'
         self.add_action(
             icon_path,
             text=self.tr(u'View Spectra'),
             callback=self.run,
             parent=self.iface.mainWindow())
-        self.dlg=qgisSpectreDockWidget(self.iface.mainWindow())
+        # Moved to __init__
+        # self.dlg=qgisSpectreDockWidget(self.iface.mainWindow())
         self.view.setParent(self.dlg) 
         self.dlg.hlMain.addWidget(self.view)
         #self.dlg.cbLayer.currentIndexChanged['QString'].connect(self.listfields)
