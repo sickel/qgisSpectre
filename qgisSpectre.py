@@ -30,7 +30,7 @@ View spectra stored in a geodataset. The spectral data must be stored in an arra
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 import qgis.PyQt.QtCore
 from qgis.PyQt.QtGui import QIcon, QImage, QPainter
-from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication,QGraphicsView,QCheckBox, QFileDialog
+from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication,QGraphicsView,QCheckBox, QFileDialog, QTableWidgetItem
 from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QColor
 # Initialize Qt resources from file resources.py
@@ -377,28 +377,33 @@ class qgisSpectre:
                 s.append(None)
                 f.append(None)
         m = window // 2
+        # TODO: Window should vary throughout the dataset as the peak width depends on the energy
         for i in range(5):
             # Does a five times sum smoothing
             s=self.smoothsum(s,m)
+        # s holds a Mariscotti data set. Where s < 0 there is a peak
         peak=[]
         peakstart=0
         peaks=[]
         peakranges=[]
+        # Going through the Mariscotti data set to look for peaks
         for ch in range(len(s)):
             if peak != []:
+                # Within a peak
                 # A peak may end into the Nulls at the end
-                if s[ch] is None or s[ch] > 0:
+                if s[ch] is None or s[ch] >= 0:
                     # Peak has finished
                     # Does peak refinement as in 
                     # Sam Fearn (2022): An Open-Source Iterative python Module for the Automated Identification of Photopeaks in Photon Spectra v2.0. 
                     # https://doi.org/10.5523/bris.n3cm8fnce5ri2k55dlipee3st
-                    
+                    # Need to find the average value before the peak
                     pre  = sum(y[peakstart-10:peakstart])/10
+                    # And after the peak, more complicated, since this may be too close to the end of the spectrum
                     try:
                         post = sum(y[ch:ch+10])/10
                     except TypeError:
                         # TODO: Needs to refine this. This may happen towards the end of the spectrum
-                        # TODO: Needs to handle index error 
+                        # DONE: Needs to handle index error 
                         post = 0
                     except IndexError:
                         # Trying to read past end of spectre
@@ -406,23 +411,15 @@ class qgisSpectre:
                             post = sum(y[ch:])/(len(y)-1-ch)
                         else:
                             post = 0
-                    print(f"{pre},{post}")
-                    print(f"chs:{peakstart},{ch}")
+                    # Adjusting for non-flat background through peak
                     a = (post-pre)/(ch-peakstart)
-                    print(f"a:{a}")
                     peakvalues=y[peakstart:ch]
                     peakadj = []
                     for i in range(len(peakvalues)):
                         val=peakvalues[i]-(i*a+pre)
                         peakadj.append(val)
-                    print(f"peakvalues:{peakvalues}")
-                    print(f"peakadj:{peakadj}")
                     coefs = [-2,3,6,7,6,3,-2]
                     peakadj = self.savgolsmooth(peakadj,coefs)
-                    print(f"smoothed:{peakadj}")
-                    minval = min(peak)
-                    minch = peak.index(minval)+peakstart+1
-                    print(f"minch:{minch}")
                     maxval = max(peakadj)
                     maxch = peakadj.index(maxval)+peakstart+1
                     print(f"maxch:{maxch}")
@@ -431,12 +428,16 @@ class qgisSpectre:
                     peakranges.append([peakstart,ch-1])
                     peak = []
             if s[ch] is not None and s[ch] < 0:
+                # This may start a new peak, if so peakstart must be stored,
+                # if it is an ongoing peak, just append the channel value
                 if peak == []:
                     peakstart=ch
+                    
                 peak.append(s[ch])
         return(list(zip(peaks, peakranges)))
     
     def savgolsmooth(self,data,coefs):
+        # Savitzky Golay smoothing
         win = len(coefs)
         halfwin = int((win-1)/2)
         buff=[0] * halfwin
@@ -490,6 +491,12 @@ class qgisSpectre:
             maxval=math.log(maxval)-math.log(0.9)
         fact=(h-bt-10)/maxval
         bluepen = QPen(QBrush(QColor(0,0,255,100)), 2, Qt.DashLine)
+        peaktablewidget = self.dlg.tWpeaktable 
+        peaktablewidget.setRowCount(len(self.peaks)+1)
+        peaktablewidget.setColumnCount(2)
+        peaktablewidget.setItem(0,0,QTableWidgetItem("Channel"))
+        peaktablewidget.setItem(0,1,QTableWidgetItem("Energy"))
+        line = 1
         for(x,y) in self.peaks:
             n=spectre[int(x)]
             y=n
@@ -506,10 +513,33 @@ class qgisSpectre:
                 xval = x*self.scene.acalib+self.scene.bcalib
             except:
                 xval = x
+            
             pt = self.scene.addText(str(round(xval,1)))
             pt.setPos(xcoord+1,ycoord-15)
+            peaktablewidget.setItem(line,0,QTableWidgetItem(str(x)))
+            peaktablewidget.setItem(line,1,QTableWidgetItem(str(xval)))
+            line += 1
         print(self.peaks)
-
+        self.drawnuclidelines()
+        
+    def drawnuclidelines(self):
+        print(self.gammas)
+        #yellowpen = QPen(QBrush(QColor(255,255,0,100)), 2, Qt.DashLine)
+        yellowpen = QPen(QBrush(QColor(255,0,0,100)), 2, Qt.DashLine) # red! 
+        for nuc in self.gammas:
+            print(nuc,self.gammas[nuc])
+            for e in self.gammas[nuc]:
+                print(e)
+                x = round((e - self.scene.bcalib)/self.scene.acalib)
+                print(x)
+                xcoord = float(self.scene.left+x)
+                print(xcoord)
+                ycoord = 50
+                pl=self.scene.addLine(xcoord,ycoord-10,xcoord,ycoord+10,yellowpen)
+                self.scene.peaklines.append(pl)
+                pt = self.scene.addText(nuc)
+                pt.setPos(xcoord+1,ycoord-15)
+            
     def updatecalib(self):
         """ Prepares newly typed in  calibration values for use """
         self.dlg.cbDefault.setChecked(False)
@@ -724,7 +754,7 @@ class MouseReadGraphicsView(QGraphicsView):
         if unit == 'Ch':
             message="{} {} (n={})".format(unit,int(energy),self.spectreval[int(ch)])
         else:
-            message="{} {} (n={})".format(int(energy),unit,self.spectreval[int(ch)])
+            message="Ch {}, {} {} (n={})".format(int(ch),int(energy),unit,self.spectreval[int(ch)])
         if self.scene().crdtext is not None:
             self.scene().removeItem(self.scene().crdtext)
         if self.scene().markerline is not None:
