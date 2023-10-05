@@ -42,9 +42,9 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
-      <widget class="QWidget" name="tab">
+      <widget class="QWidget" name="tab_Setup">
        <attribute name="title">
         <string>Setup</string>
        </attribute>
@@ -53,7 +53,7 @@
          <rect>
           <x>10</x>
           <y>10</y>
-          <width>251</width>
+          <width>268</width>
           <height>298</height>
          </rect>
         </property>
@@ -216,9 +216,9 @@
         </layout>
        </widget>
       </widget>
-      <widget class="QWidget" name="tab_3">
+      <widget class="QWidget" name="tab_peaks">
        <attribute name="title">
-        <string>Page</string>
+        <string>Peaks</string>
        </attribute>
        <widget class="QTableWidget" name="tWpeaktable">
         <property name="geometry">
@@ -231,7 +231,7 @@
         </property>
        </widget>
       </widget>
-      <widget class="QWidget" name="tab_2">
+      <widget class="QWidget" name="tab_calibration">
        <attribute name="title">
         <string>Calibration</string>
        </attribute>
@@ -240,7 +240,7 @@
          <rect>
           <x>9</x>
           <y>9</y>
-          <width>254</width>
+          <width>273</width>
           <height>281</height>
          </rect>
         </property>
