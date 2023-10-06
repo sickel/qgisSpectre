@@ -492,11 +492,10 @@ class qgisSpectre:
         fact=(h-bt-10)/maxval
         bluepen = QPen(QBrush(QColor(0,0,255,100)), 2, Qt.DashLine)
         peaktablewidget = self.dlg.tWpeaktable 
-        peaktablewidget.setRowCount(len(self.peaks)+1)
+        peaktablewidget.setRowCount(len(self.peaks))
         peaktablewidget.setColumnCount(2)
-        peaktablewidget.setItem(0,0,QTableWidgetItem("Channel"))
-        peaktablewidget.setItem(0,1,QTableWidgetItem("Energy"))
-        line = 1
+        peaktablewidget.setHorizontalHeaderLabels(["Channel","Energy"])
+        line = 0
         for(x,y) in self.peaks:
             n=spectre[int(x)]
             y=n
@@ -517,7 +516,7 @@ class qgisSpectre:
             pt = self.scene.addText(str(round(xval,1)))
             pt.setPos(xcoord+1,ycoord-15)
             peaktablewidget.setItem(line,0,QTableWidgetItem(str(x)))
-            peaktablewidget.setItem(line,1,QTableWidgetItem(str(xval)))
+            peaktablewidget.setItem(line,1,QTableWidgetItem('{:.1f}'.format(xval)))
             line += 1
         print(self.peaks)
         self.drawnuclidelines()
