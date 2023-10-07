@@ -525,12 +525,10 @@ class qgisSpectre:
                 # Need some better handling!
                 print('Some problems here, removing nukline')
         self.scene.nuklines=[]
-        print(self.gammas)
         #yellowpen = QPen(QBrush(QColor(255,255,0,100)), 2, Qt.DashLine)
         linepen = QPen(QBrush(QColor(255,0,0,100)), 1, Qt.DashLine) # red! 
         chaccuracy = 1/100
         for nuc in self.gammas:
-            print(nuc,self.gammas[nuc])
             for e in self.gammas[nuc]:
                 print(e)
                 x = round((e - self.scene.bcalib)/self.scene.acalib)
@@ -545,17 +543,21 @@ class qgisSpectre:
                     # Fails out for some reason
                     print(e)
                 if not draw:
-                    print(f"do not draw {nuc} ")
                     continue
-                print(f"draw {nuc}")
-                xcoord = float(self.scene.left+x)
-                print(xcoord)
-                ycoord = 2
-                pl=self.scene.addLine(xcoord,ycoord,xcoord,300 - self.scene.bottom+5 ,linepen)
-                self.scene.nuklines.append(pl)
-                pt = self.scene.addText(nuc)
-                pt.setPos(xcoord+1,ycoord-15)
-                self.scene.nuklines.append(pt)
+                try:
+                    xcoord = float(self.scene.left+x)
+                    ycoord = 2
+                    pl=self.scene.addLine(xcoord,ycoord,xcoord,300 - self.scene.bottom+5 ,linepen)
+                    self.scene.nuklines.append(pl)
+                    # To keep the overview and be able to remove later o
+                    pt = self.scene.addText(nuc)
+                    pt.setPos(xcoord+1,ycoord-15)
+                    self.scene.nuklines.append(pt)
+                    # As above
+                except NameError as e:
+                    # Gets 'name scene not defined' ....
+                    print(e)
+                
             
     def updatecalib(self):
         """ Prepares newly typed in  calibration values for use """
