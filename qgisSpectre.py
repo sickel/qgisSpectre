@@ -458,32 +458,26 @@ class qgisSpectre:
         # DONE: Calculate peaks on smoothed spectrum
         # TODO: Find nuclides with correct energy
         # DONE: Print channel# or energy
+        # TODO: Remove exsisting markers
         if spectre is None or not spectre:
             spectre=self.view.spectreval
         x=list(range(len(spectre)))
         window = int(self.dlg.leWindow.text())
         treshold = int(self.dlg.leTreshold.text())
         self.peaks=self.peak_finder(x,spectre,window,treshold)
-        # TODO: Combine this two removeitem calls
-        if hasattr(self.scene,'peaklines'):
+        # DONE: Combine this two removeitem calls - no reason to have two differet lists
+        if hasattr(self.scene,'peakdescriptions'):
             try:
-                for pl in self.scene.peaklines:
+                for pl in self.scene.peakdescriptions:
                     if pl.scene==self.scene:
                         self.scene.removeItem(pl)
             except:
-                # Need some better handling!
-                pass
-        if hasattr(self.scene,'peaktexts'):
-            try:
-                for pt in self.scene.peaktexts:
-                    if pt.scene == self.scene:
-                        self.scene.removeItem(pt)
-            except:
+                print("peakdescriptions problem")
                 # Need some better handling!
                 pass
             
-        self.scene.peaklines=[]
-        self.scene.peaktexts=[]
+        self.scene.peakdescriptions=[]
+
         bt=self.scene.bottom
         h=self.scene.h
         maxval=max(spectre)
@@ -507,7 +501,7 @@ class qgisSpectre:
             print(ycoord)
             xcoord = float(self.scene.left+x)
             pl=self.scene.addLine(xcoord,ycoord-10,xcoord,ycoord+10,bluepen)
-            self.scene.peaklines.append(pl)
+            self.scene.peakdescriptions.append(pl)
             try:
                 xval = x*self.scene.acalib+self.scene.bcalib
             except:
@@ -515,6 +509,7 @@ class qgisSpectre:
             
             pt = self.scene.addText(str(round(xval,1)))
             pt.setPos(xcoord+1,ycoord-15)
+            self.scene.peakdescriptions.append(pt)
             peaktablewidget.setItem(line,0,QTableWidgetItem(str(x)))
             peaktablewidget.setItem(line,1,QTableWidgetItem('{:.1f}'.format(xval)))
             line += 1
@@ -522,6 +517,25 @@ class qgisSpectre:
         self.drawnuclidelines()
         
     def drawnuclidelines(self):
+        if hasattr(self.scene,'nuktexts'):
+            try:
+                for pt in self.scene.nuktexts:
+                    if pt.scene == self.scene:
+                        self.scene.removeItem(pt)
+            except:
+                # Need some better handling!
+                pass
+        if hasattr(self.scene,'nuklines'):
+            try:
+                for pt in self.scene.nuklines:
+                    if pt.scene == self.scene:
+                        self.scene.removeItem(pt)
+            except:
+                # Need some better handling!
+                print('Some problems here, removing nukline')
+        self.scene.nuklines=[]
+        self.scene.nuktexts=[]
+        print('All nukdata gone...')
         print(self.gammas)
         #yellowpen = QPen(QBrush(QColor(255,255,0,100)), 2, Qt.DashLine)
         yellowpen = QPen(QBrush(QColor(255,0,0,100)), 2, Qt.DashLine) # red! 
@@ -535,9 +549,10 @@ class qgisSpectre:
                 print(xcoord)
                 ycoord = 50
                 pl=self.scene.addLine(xcoord,ycoord-10,xcoord,ycoord+10,yellowpen)
-                self.scene.peaklines.append(pl)
+                self.scene.nuklines.append(pl)
                 pt = self.scene.addText(nuc)
                 pt.setPos(xcoord+1,ycoord-15)
+                self.scene.nuklines.append(pt)
             
     def updatecalib(self):
         """ Prepares newly typed in  calibration values for use """
@@ -707,6 +722,7 @@ class qgisSpectre:
             self.dlg.pBSave.clicked.connect(self.view.saveImage)
             self.dlg.pBPeakDetection.clicked.connect(self.detectpeaks)
             self.dlg.leUnit.textChanged.connect(self.updateUnit)
+            self.dlg.btRefresh.clicked.connect(self.findselected)
             
             # connect to provide cleanup on closing of dockwidget
             self.dlg.closingPlugin.connect(self.onClosePlugin)
