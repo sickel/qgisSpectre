@@ -334,8 +334,8 @@ class qgisSpectre:
         
         text=self.scene.addText(self.scene.unit)
         text.setPos(self.scene.end+15,280)
-        ntext=self.scene.addText("n = {}".format(str(self.view.n)))
-        ntext.setPos(self.scene.end+50,1)
+        ntext=self.scene.addText(f"n = {self.view.n}")
+        ntext.setPos(1,-10)
         if self.dlg.cBautodetect.isChecked():
             self.detectpeaks(data)
     
@@ -527,8 +527,8 @@ class qgisSpectre:
         self.scene.nuklines=[]
         print(self.gammas)
         #yellowpen = QPen(QBrush(QColor(255,255,0,100)), 2, Qt.DashLine)
-        yellowpen = QPen(QBrush(QColor(255,0,0,100)), 2, Qt.DashLine) # red! 
-        chaccuracy = 3
+        linepen = QPen(QBrush(QColor(255,0,0,100)), 1, Qt.DashLine) # red! 
+        chaccuracy = 1/100
         for nuc in self.gammas:
             print(nuc,self.gammas[nuc])
             for e in self.gammas[nuc]:
@@ -536,18 +536,22 @@ class qgisSpectre:
                 x = round((e - self.scene.bcalib)/self.scene.acalib)
                 print(x)
                 draw = False
-                for peak in self.peaks:
-                    channel=peak[0]
-                    draw = draw or (channel-chaccuracy <= x and channel+chaccuracy >=x)
+                try:
+                    for peak in self.peaks:
+                        channel=peak[0]
+                        draw = draw or (channel-channel*chaccuracy <= x and channel+channel*chaccuracy >=x)
                     # print(x,peak[0],draw)
+                except e as TypeError:
+                    # Fails out for some reason
+                    print(e)
                 if not draw:
                     print(f"do not draw {nuc} ")
                     continue
                 print(f"draw {nuc}")
                 xcoord = float(self.scene.left+x)
                 print(xcoord)
-                ycoord = 50
-                pl=self.scene.addLine(xcoord,ycoord-10,xcoord,ycoord+10,yellowpen)
+                ycoord = 2
+                pl=self.scene.addLine(xcoord,ycoord,xcoord,300 - self.scene.bottom+5 ,linepen)
                 self.scene.nuklines.append(pl)
                 pt = self.scene.addText(nuc)
                 pt.setPos(xcoord+1,ycoord-15)
