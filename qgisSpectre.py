@@ -473,9 +473,7 @@ class qgisSpectre:
                         self.scene.removeItem(pl)
             except:
                 print("peakdescriptions problem")
-                # Need some better handling!
-                pass
-            
+                # Need some better handling?
         self.scene.peakdescriptions=[]
 
         bt=self.scene.bottom
@@ -517,15 +515,8 @@ class qgisSpectre:
         self.drawnuclidelines()
         
     def drawnuclidelines(self):
-        if hasattr(self.scene,'nuktexts'):
-            try:
-                for pt in self.scene.nuktexts:
-                    if pt.scene == self.scene:
-                        self.scene.removeItem(pt)
-            except:
-                # Need some better handling!
-                pass
         if hasattr(self.scene,'nuklines'):
+            # been here before, may have drawn lines
             try:
                 for pt in self.scene.nuklines:
                     if pt.scene == self.scene:
@@ -534,17 +525,25 @@ class qgisSpectre:
                 # Need some better handling!
                 print('Some problems here, removing nukline')
         self.scene.nuklines=[]
-        self.scene.nuktexts=[]
-        print('All nukdata gone...')
         print(self.gammas)
         #yellowpen = QPen(QBrush(QColor(255,255,0,100)), 2, Qt.DashLine)
         yellowpen = QPen(QBrush(QColor(255,0,0,100)), 2, Qt.DashLine) # red! 
+        chaccuracy = 3
         for nuc in self.gammas:
             print(nuc,self.gammas[nuc])
             for e in self.gammas[nuc]:
                 print(e)
                 x = round((e - self.scene.bcalib)/self.scene.acalib)
                 print(x)
+                draw = False
+                for peak in self.peaks:
+                    channel=peak[0]
+                    draw = draw or (channel-chaccuracy <= x and channel+chaccuracy >=x)
+                    # print(x,peak[0],draw)
+                if not draw:
+                    print(f"do not draw {nuc} ")
+                    continue
+                print(f"draw {nuc}")
                 xcoord = float(self.scene.left+x)
                 print(xcoord)
                 ycoord = 50
