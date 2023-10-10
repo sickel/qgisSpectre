@@ -485,8 +485,8 @@ class qgisSpectre:
         bluepen = QPen(QBrush(QColor(0,0,255,100)), 2, Qt.DashLine)
         peaktablewidget = self.dlg.tWpeaktable 
         peaktablewidget.setRowCount(len(self.peaks))
-        peaktablewidget.setColumnCount(2)
-        peaktablewidget.setHorizontalHeaderLabels(["Channel","Energy"])
+        peaktablewidget.setColumnCount(3)
+        peaktablewidget.setHorizontalHeaderLabels(["Channel","Energy","Target"])
         line = 0
         for(x,y) in self.peaks:
             n=spectre[int(x)]
@@ -684,9 +684,43 @@ class qgisSpectre:
         if not basepath:
             basepath = os.path.dirname(os.path.realpath(__file__))
         return os.path.join(basepath, name)
-        
+    
+    def calccalibrate(self):
+        #Reads in values 
+        tablewidget = self.dlg.tWpeaktable
+        data = []
+        maxtarget = -1
+        #print(tablewidget.rowCount())
+        for row in range(tablewidget.rowCount()):
+            target = tablewidget.item(row,2)
+            if target is None:
+                continue
+            ch = tablewidget.item(row,0).text()
+            target = target.text()
+            try:
+                target = float(target)
+                ch = int(ch)
+                data.append([ch,target])
+            except:
+                self.iface.messageBar().pushMessage(
+                    f'{ch} or {target} is not numeric',
+                    level=Qgis.Warning, duration=15)
+                continue
+            if target < maxtarget:
+                self.iface.messageBar().pushMessage(
+                    f'Channel {ch}: {target} &lt; {maxtarget} targetenergy must be increasing',
+                    level=Qgis.Warning, duration=15)
+                continue
+            maxtarget = target
+            if len(data) < 2:
+                self.iface.messageBar().pushMessage(
+                    'Too few valid points, cannot calculate calibrations',
+                    level=Qgis.Warning, duration=15)
+                continue
+        print(data)
     
     def run(self):
+        print("starting")
         """Run method that loads and starts the plugin"""
         if not self.pluginIsActive:
             self.pluginIsActive = True
@@ -726,7 +760,7 @@ class qgisSpectre:
             self.dlg.pBPeakDetection.clicked.connect(self.detectpeaks)
             self.dlg.leUnit.textChanged.connect(self.updateUnit)
             self.dlg.btRefresh.clicked.connect(self.findselected)
-            
+            self.dlg.pBCalibrate.clicked.connect(self.calccalibrate)
             # connect to provide cleanup on closing of dockwidget
             self.dlg.closingPlugin.connect(self.onClosePlugin)
             # show the dockwidget
