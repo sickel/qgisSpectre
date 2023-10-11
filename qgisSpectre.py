@@ -46,6 +46,7 @@ import os.path
 import math 
 import json
 import yaml
+import numpy as np
 
 class qgisSpectre:
     """QGIS Plugin Implementation."""
@@ -685,10 +686,34 @@ class qgisSpectre:
             basepath = os.path.dirname(os.path.realpath(__file__))
         return os.path.join(basepath, name)
     
+    def estimateCoef(self,x, y):
+        x = np.array(x)
+        y = np.array(y)
+        # number of observations/points
+        n = np.size(x)
+     
+        # mean of x and y vector
+        m_x = np.mean(x)
+        m_y = np.mean(y)
+     
+        # calculating cross-deviation and deviation about x
+        SS_xy = np.sum(y*x) - n*m_y*m_x
+        SS_xx = np.sum(x*x) - n*m_x*m_x
+     
+        # calculating regression coefficients
+        b_1 = SS_xy / SS_xx
+        b_0 = m_y - b_1*m_x
+     
+        return (b_0, b_1)
+    
+    
     def calccalibrate(self):
         #Reads in values 
+        self.dlg.cbUseCalibration.setChecked(False)
         tablewidget = self.dlg.tWpeaktable
         data = []
+        chs = []
+        targets = []
         maxtarget = -1
         #print(tablewidget.rowCount())
         for row in range(tablewidget.rowCount()):
@@ -701,23 +726,31 @@ class qgisSpectre:
                 target = float(target)
                 ch = int(ch)
                 data.append([ch,target])
+                chs.append(ch)
+                targets.append(target)
             except:
+                if target =='':
+                    continue
                 self.iface.messageBar().pushMessage(
-                    f'{ch} or {target} is not numeric',
+                    f"'{ch}' or '{target}' is not numeric",
                     level=Qgis.Warning, duration=15)
                 continue
             if target < maxtarget:
                 self.iface.messageBar().pushMessage(
-                    f'Channel {ch}: {target} &lt; {maxtarget} targetenergy must be increasing',
+                    f'Channel {ch}: {target} &lt; {maxtarget}: targetenergy must be increasing',
                     level=Qgis.Warning, duration=15)
                 continue
             maxtarget = target
-            if len(data) < 2:
-                self.iface.messageBar().pushMessage(
-                    'Too few valid points, cannot calculate calibrations',
-                    level=Qgis.Warning, duration=15)
-                continue
-        print(data)
+        if len(data) < 2:
+            print(data)
+            self.iface.messageBar().pushMessage(
+                'Too few valid points, cannot calculate calibration',
+                level=Qgis.Warning, duration=15)    
+        (b,a) = self.estimateCoef(chs,targets)
+        self.dlg.labA.setText('{:.4f}'.format(a))
+        self.dlg.labB.setText('{:.4f}'.format(b))
+        
+        
     
     def run(self):
         print("starting")
@@ -760,13 +793,16 @@ class qgisSpectre:
             self.dlg.pBPeakDetection.clicked.connect(self.detectpeaks)
             self.dlg.leUnit.textChanged.connect(self.updateUnit)
             self.dlg.btRefresh.clicked.connect(self.findselected)
+            self.dlg.btRefresh_2.clicked.connect(self.findselected)
             self.dlg.pBCalibrate.clicked.connect(self.calccalibrate)
+            
             # connect to provide cleanup on closing of dockwidget
             self.dlg.closingPlugin.connect(self.onClosePlugin)
             # show the dockwidget
             self.iface.mainWindow().addDockWidget(Qt.BottomDockWidgetArea, self.dlg)
             self.dlg.show()
             self.dlg.cbLog.stateChanged.connect(self.findselected)
+            self.dlg.cbUseCalibration.stateChanged.connect(self.copycalibdata)
             self.dlg.cbDefault.stateChanged.connect(self.setdefault)
             self.dlg.qgField.currentIndexChanged['QString'].connect(self.prepareplot)
             self.dlg.qgLayer.currentIndexChanged['QString'].connect(self.prepareplot)
@@ -783,6 +819,12 @@ class qgisSpectre:
             #    for energy in self.gammas[nuk]
             #        self.
             
+    def copycalibdata(self):        
+        if self.dlg.cbUseCalibration.isChecked():
+            self.dlg.leA.setText(self.dlg.labA.text())
+            self.dlg.leB.setText(self.dlg.labB.text())
+            self.findselected()
+          
 class MouseReadGraphicsView(QGraphicsView):
     """ A class based on QGraphicsView to enable capture of mouse events"""
     
