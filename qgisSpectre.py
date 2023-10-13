@@ -542,7 +542,7 @@ class qgisSpectre:
         self.scene.nuklines=[]
         #yellowpen = QPen(QBrush(QColor(255,255,0,100)), 2, Qt.DashLine)
         linepen = QPen(QBrush(QColor(255,0,0,100)), 1, Qt.DashLine) # red! 
-        chaccuracy = 1/100
+        chaccuracy = float(self.dlg.leAccuracy.text())/100
         for nuc in self.gammas:
             for e in self.gammas[nuc]:
                 print(e)
