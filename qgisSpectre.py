@@ -808,7 +808,7 @@ class qgisSpectre:
             self.dlg.pBUseDefault.clicked.connect(self.usedefault)
             self.dlg.pBSaveCalib.clicked.connect(self.saveCalibration)
             self.dlg.pBSave.clicked.connect(self.view.saveImage)
-            self.dlg.pBPeakDetection.clicked.connect(self.detectpeaks)
+            self.dlg.pBPeakDetection.clicked.connect(self.detectandfind)
             self.dlg.leUnit.textChanged.connect(self.updateUnit)
             self.dlg.btRefresh.clicked.connect(self.findselected)
             self.dlg.btRefresh_2.clicked.connect(self.findselected)
@@ -842,6 +842,10 @@ class qgisSpectre:
             self.dlg.leA.setText(self.dlg.labA.text())
             self.dlg.leB.setText(self.dlg.labB.text())
             self.findselected()
+            
+    def detectandfind(self):
+        self.detectpeaks()
+        self.findselected()
           
 class MouseReadGraphicsView(QGraphicsView):
     """ A class based on QGraphicsView to enable capture of mouse events"""
