@@ -546,8 +546,14 @@ class qgisSpectre:
         for nuc in self.gammas:
             for e in self.gammas[nuc]:
                 print(e)
-                x = round((e - self.scene.bcalib)/self.scene.acalib)
-                print(x)
+                try:
+                    x = round((float(e) - self.scene.bcalib)/self.scene.acalib)
+                except:
+                    self.iface.messageBar().pushMessage(
+                       f'Invalid energy {e} for {nuc}',
+                        level=Qgis.Warning, duration=15)
+        
+                    print()
                 draw = False
                 try:
                     for peak in self.peaks:
