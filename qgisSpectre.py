@@ -46,6 +46,7 @@ import os.path
 import math 
 import json
 import yaml
+import numpy as np
 
 class qgisSpectre:
     """QGIS Plugin Implementation."""
@@ -246,23 +247,28 @@ class qgisSpectre:
             self.updateUnit()
             data=self.view.spectreval
             # Prepares background and axis
-            self.scene.h=300 # Height of scene
+            self.scene.h=330 # Height of scene
             self.scene.clear()
             self.scene.crdtext=None
             self.scene.markerline=None
             backgroundbrush=QBrush(Qt.white)
             outlinepen=QPen(Qt.white)
-            # Needs this when saving as png, or background from map will shine through
-            self.scene.addRect(0,0,1200,300,outlinepen,backgroundbrush) 
             self.scene.bottom=20 # Bottom clearing (for x tick marks and labels)
             self.scene.left=self.scene.bottom # Left clearing (for y tick marks and labels)
+            self.scene.top = 30
             left=self.scene.left
             h=self.scene.h
             bt=self.scene.bottom
+            # Needs this when saving as png, or background from map will shine through
+            self.scene.addRect(0,0,1200,h,outlinepen,backgroundbrush) 
             # Y-axis:
-            self.scene.addLine(float(self.scene.left-1),float(h-bt),float(left-1),10.0) 
+            self.scene.addLine(float(left-1),float(h-bt),float(left-1),10.0) 
             # X-axis:
             self.scene.addLine(float(left-1),float(h-bt-1),float(len(data)+10),float(h-bt-1)) 
+            if self.debug:
+                self.scene.addLine(1.0,float(h),1000.0,float(h))
+                self.scene.addLine(1.0,0.0,1000.0,0.0   )
+            
             acalib=self.scene.acalib
             bcalib=self.scene.bcalib
             maxval=acalib*len(data)+bcalib
@@ -275,13 +281,15 @@ class qgisSpectre:
             oom=10**math.floor(math.log10(tickval))
             tickval=round(tickval/oom)*oom
             tickdist=tickval
+            tickTextY = float(h-bt+2)
             while tickval < maxval:
                 tickch=(tickval-bcalib)/acalib+left
-                self.scene.addLine(float(tickch),float(h-bt),float(tickch),float(h-bt+5)) 
+                self.scene.addLine(float(tickch),float(h-bt),float(tickch),float(h-bt+4)) 
                 # Ticklines
                 text=self.scene.addText(str(tickval))
-                text.setPos(tickch+left-40, 280)
+                text.setPos(tickch+left-40, tickTextY)
                 tickval+=tickdist
+        # Setting unit for ticks further down, after the size of the spectra is found    
         else:
             spectrepen=QPen(Qt.red)
         logscale=self.dlg.cbLog.isChecked()
@@ -310,10 +318,11 @@ class qgisSpectre:
         #TODO: Save different set of calibration values
         
         # Scales the spectra to fit with the size of the graphicsview
-        bt=self.scene.bottom
-        h=self.scene.h
-        fact=1.0
-        fact=(h-bt-10)/max(dataset)
+        bt = self.scene.bottom
+        top = self.scene.top
+        h = self.scene.h-self.scene.bottom
+        fact = 1.0
+        fact=(h-bt-top)/max(dataset)
         prevvalue=0
         ch=self.scene.left
         for chvalue in dataset:
@@ -324,6 +333,8 @@ class qgisSpectre:
             prevvalue=chvalue
             ch+=1
         self.scene.end=ch-1
+        text=self.scene.addText(self.scene.unit)
+        text.setPos(self.scene.end+1,tickTextY)
         s = QgsSettings()
         layername=self.dlg.qgLayer.currentText()
         fieldname=self.dlg.qgField.currentText()
@@ -332,10 +343,8 @@ class qgisSpectre:
         #bcalib=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_b",s.value(self.pluginname+"/defaultb", 0))
         #self.scene.unit=s.value(self.pluginname+"/"+layername+"_"+fieldname+"_unit",s.value(self.pluginname+"/defaultunit", 0))
         
-        text=self.scene.addText(self.scene.unit)
-        text.setPos(self.scene.end+15,280)
         ntext=self.scene.addText(f"n = {self.view.n}")
-        ntext.setPos(1,-10)
+        ntext.setPos(left + 2,1)
         if self.dlg.cBautodetect.isChecked():
             self.detectpeaks(data)
     
@@ -478,17 +487,18 @@ class qgisSpectre:
 
         bt=self.scene.bottom
         h=self.scene.h
+        top = self.scene.top
         maxval=max(spectre)
         if self.dlg.cbLog.isChecked():
             maxval=math.log(maxval)-math.log(0.9)
-        fact=(h-bt-10)/maxval
+        fact=(h-bt-top)/maxval
         bluepen = QPen(QBrush(QColor(0,0,255,100)), 2, Qt.DashLine)
         peaktablewidget = self.dlg.tWpeaktable 
         peaktablewidget.setRowCount(len(self.peaks))
-        peaktablewidget.setColumnCount(2)
-        peaktablewidget.setHorizontalHeaderLabels(["Channel","Energy"])
+        peaktablewidget.setColumnCount(3)
+        peaktablewidget.setHorizontalHeaderLabels(["Channel","Energy","Target"])
         line = 0
-        for(x,y) in self.peaks:
+        for(x,ends) in self.peaks:
             n=spectre[int(x)]
             y=n
             if self.dlg.cbLog.isChecked():
@@ -504,12 +514,17 @@ class qgisSpectre:
                 xval = x*self.scene.acalib+self.scene.bcalib
             except:
                 xval = x
-            
             pt = self.scene.addText(str(round(xval,1)))
-            pt.setPos(xcoord+1,ycoord-15)
+            pt.setPos(xcoord+1,ycoord-30)
             self.scene.peakdescriptions.append(pt)
             peaktablewidget.setItem(line,0,QTableWidgetItem(str(x)))
             peaktablewidget.setItem(line,1,QTableWidgetItem('{:.1f}'.format(xval)))
+            # Markers for debugging, to be turned off in production
+            if self.debug:
+                for end in ends:
+                    xcoord = float(self.scene.left+end)
+                    pl=self.scene.addLine(xcoord,ycoord-10,xcoord,ycoord+10,bluepen)
+                    self.scene.peakdescriptions.append(pl)    
             line += 1
         print(self.peaks)
         self.drawnuclidelines()
@@ -551,13 +566,13 @@ class qgisSpectre:
                     self.scene.nuklines.append(pl)
                     # To keep the overview and be able to remove later o
                     pt = self.scene.addText(nuc)
-                    pt.setPos(xcoord+1,ycoord-15)
+                    pt.setPos(xcoord+1,1)
                     self.scene.nuklines.append(pt)
                     # As above
                 except NameError as e:
                     # Gets 'name scene not defined' ....
                     print(e)
-                
+
             
     def updatecalib(self):
         """ Prepares newly typed in  calibration values for use """
@@ -686,24 +701,91 @@ class qgisSpectre:
         if not basepath:
             basepath = os.path.dirname(os.path.realpath(__file__))
         return os.path.join(basepath, name)
+    
+    def estimateCoef(self,x, y):
+        x = np.array(x)
+        y = np.array(y)
+        # number of observations/points
+        n = np.size(x)
+     
+        # mean of x and y vector
+        m_x = np.mean(x)
+        m_y = np.mean(y)
+     
+        # calculating cross-deviation and deviation about x
+        SS_xy = np.sum(y*x) - n*m_y*m_x
+        SS_xx = np.sum(x*x) - n*m_x*m_x
+     
+        # calculating regression coefficients
+        b_1 = SS_xy / SS_xx
+        b_0 = m_y - b_1*m_x
+     
+        return (b_0, b_1)
+    
+    
+    def calccalibrate(self):
+        #Reads in values 
+        self.dlg.cbUseCalibration.setChecked(False)
+        tablewidget = self.dlg.tWpeaktable
+        data = []
+        chs = []
+        targets = []
+        maxtarget = -1
+        #print(tablewidget.rowCount())
+        for row in range(tablewidget.rowCount()):
+            target = tablewidget.item(row,2)
+            if target is None:
+                continue
+            ch = tablewidget.item(row,0).text()
+            target = target.text()
+            try:
+                target = float(target)
+                ch = int(ch)
+                data.append([ch,target])
+                chs.append(ch)
+                targets.append(target)
+            except:
+                if target =='':
+                    continue
+                self.iface.messageBar().pushMessage(
+                    f"'{ch}' or '{target}' is not numeric",
+                    level=Qgis.Warning, duration=15)
+                continue
+            if target < maxtarget:
+                self.iface.messageBar().pushMessage(
+                    f'Channel {ch}: {target} &lt; {maxtarget}: targetenergy must be increasing',
+                    level=Qgis.Warning, duration=15)
+                continue
+            maxtarget = target
+        if len(data) < 2:
+            print(data)
+            self.iface.messageBar().pushMessage(
+                'Too few valid points, cannot calculate calibration',
+                level=Qgis.Warning, duration=15)    
+        (b,a) = self.estimateCoef(chs,targets)
+        self.dlg.labA.setText('{:.4f}'.format(a))
+        self.dlg.labB.setText('{:.4f}'.format(b))
+        
         
     
     def run(self):
+        print("starting")
         """Run method that loads and starts the plugin"""
         if not self.pluginIsActive:
             self.pluginIsActive = True
-            self.scene=QGraphicsScene()
+            self.scene = QGraphicsScene()
+            self.debug = False
             # Storing the spectra to be able to read out values later on
             # Setting the values storing line and text shown when the mouse button is clicked
-            self.scene.crdtext=None
-            self.scene.markerline=None
-            self.scene.left=None
+            self.scene.crdtext = None
+            self.scene.markerline = None
+            self.scene.left = None
             # TODO: The four next settings to be user-settable
-            self.tickinterval=100
-            s=QgsSettings()
-            self.scene.acalib=s.value(self.pluginname+"/defaulta", 1)
-            self.scene.bcalib=s.value(self.pluginname+"/defaultb", 0)
-            self.scene.unit=s.value(self.pluginname+"/defaultunit","Ch")
+            self.tickinterval = 100
+            s = QgsSettings()
+            self.scene.acalib = s.value(self.pluginname+"/defaulta", 1)
+            self.scene.bcalib = s.value(self.pluginname+"/defaultb", 0)
+            self.scene.unit = s.value(self.pluginname+"/defaultunit","Ch")
             self.dlg.leA.setText(str(self.scene.acalib))
             self.dlg.leB.setText(str(self.scene.bcalib))
             self.dlg.leUnit.setText(str(self.scene.unit))
@@ -713,7 +795,8 @@ class qgisSpectre:
                 self.scene.acalib = 1
                 self.scene.bcalib = 0
             self.view.setScene(self.scene)
-            self.scene.setSceneRect(0,0,1200,300)
+            self.scene.setSceneRect(0,0,1200,350)
+            self.scene.top = 40
             # Replotting spectre when a new selection is made
             self.iface.mapCanvas().selectionChanged.connect(self.findselected)        
             # Listing layers
@@ -728,6 +811,8 @@ class qgisSpectre:
             self.dlg.pBPeakDetection.clicked.connect(self.detectpeaks)
             self.dlg.leUnit.textChanged.connect(self.updateUnit)
             self.dlg.btRefresh.clicked.connect(self.findselected)
+            self.dlg.btRefresh_2.clicked.connect(self.findselected)
+            self.dlg.pBCalibrate.clicked.connect(self.calccalibrate)
             
             # connect to provide cleanup on closing of dockwidget
             self.dlg.closingPlugin.connect(self.onClosePlugin)
@@ -735,6 +820,7 @@ class qgisSpectre:
             self.iface.mainWindow().addDockWidget(Qt.BottomDockWidgetArea, self.dlg)
             self.dlg.show()
             self.dlg.cbLog.stateChanged.connect(self.findselected)
+            self.dlg.cbUseCalibration.stateChanged.connect(self.copycalibdata)
             self.dlg.cbDefault.stateChanged.connect(self.setdefault)
             self.dlg.qgField.currentIndexChanged['QString'].connect(self.prepareplot)
             self.dlg.qgLayer.currentIndexChanged['QString'].connect(self.prepareplot)
@@ -751,6 +837,12 @@ class qgisSpectre:
             #    for energy in self.gammas[nuk]
             #        self.
             
+    def copycalibdata(self):        
+        if self.dlg.cbUseCalibration.isChecked():
+            self.dlg.leA.setText(self.dlg.labA.text())
+            self.dlg.leB.setText(self.dlg.labB.text())
+            self.findselected()
+          
 class MouseReadGraphicsView(QGraphicsView):
     """ A class based on QGraphicsView to enable capture of mouse events"""
     
@@ -780,8 +872,9 @@ class MouseReadGraphicsView(QGraphicsView):
         if self.scene().markerline is not None:
             self.scene().removeItem(self.scene().markerline)
         self.scene().crdtext=self.scene().addText(message)
-        self.scene().crdtext.setPos(x,2)
-        self.scene().markerline=self.scene().addLine(x,0,x,300-(scene.bottom+5))
+        linetop=scene.top-20
+        self.scene().crdtext.setPos(x,linetop)
+        self.scene().markerline=self.scene().addLine(x,linetop,x,350-(scene.bottom+20))
     
     def keyPressEvent(self,event):
         ### Reads key presses to move marker line """
