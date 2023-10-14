@@ -431,7 +431,6 @@ class qgisSpectre:
                     peakadj = self.savgolsmooth(peakadj,coefs)
                     maxval = max(peakadj)
                     maxch = peakadj.index(maxval)+peakstart+1
-                    print(f"maxch:{maxch}")
                     # TODO: Fit a gaussian to peakadj to find peak channel
                     peaks.append(maxch)
                     peakranges.append([peakstart,ch-1])
@@ -506,7 +505,6 @@ class qgisSpectre:
                     n=0.9
                 y=math.log(n)-math.log(0.9)
             ycoord = h-bt-fact*y
-            print(ycoord)
             xcoord = float(self.scene.left+x)
             pl=self.scene.addLine(xcoord,ycoord-10,xcoord,ycoord+10,bluepen)
             self.scene.peakdescriptions.append(pl)
@@ -526,7 +524,6 @@ class qgisSpectre:
                     pl=self.scene.addLine(xcoord,ycoord-10,xcoord,ycoord+10,bluepen)
                     self.scene.peakdescriptions.append(pl)    
             line += 1
-        print(self.peaks)
         self.drawnuclidelines()
         
     def drawnuclidelines(self):
@@ -545,15 +542,12 @@ class qgisSpectre:
         chaccuracy = float(self.dlg.leAccuracy.text())/100
         for nuc in self.gammas:
             for e in self.gammas[nuc]:
-                print(e)
                 try:
                     x = round((float(e) - self.scene.bcalib)/self.scene.acalib)
                 except:
                     self.iface.messageBar().pushMessage(
                        f'Invalid energy {e} for {nuc}',
                         level=Qgis.Warning, duration=15)
-        
-                    print()
                 draw = False
                 try:
                     for peak in self.peaks:
@@ -562,7 +556,9 @@ class qgisSpectre:
                     # print(x,peak[0],draw)
                 except e as TypeError:
                     # Fails out for some reason
-                    print(e)
+                    self.iface.messageBar().pushMessage(
+                       f'Problem plotting {e} for {nuc}',
+                        level=Qgis.Warning, duration=15)
                 if not draw:
                     continue
                 try:
@@ -576,8 +572,10 @@ class qgisSpectre:
                     self.scene.nuklines.append(pt)
                     # As above
                 except NameError as e:
-                    # Gets 'name scene not defined' ....
-                    print(e)
+                    # Gets occasional 'name scene not defined', 
+                    self.iface.messageBar().pushMessage(
+                       f'Problem plotting {e} for {nuc}',
+                        level=Qgis.Warning, duration=15)
 
             
     def updatecalib(self):
@@ -763,19 +761,19 @@ class qgisSpectre:
                     level=Qgis.Warning, duration=15)
                 continue
             maxtarget = target
-        if len(data) < 2:
+        if len(data) >= 2:    
+            (b,a) = self.estimateCoef(chs,targets)
+            self.dlg.labA.setText('{:.4f}'.format(a))
+            self.dlg.labB.setText('{:.4f}'.format(b))
+        else:
             print(data)
             self.iface.messageBar().pushMessage(
                 'Too few valid points, cannot calculate calibration',
                 level=Qgis.Warning, duration=15)    
-        (b,a) = self.estimateCoef(chs,targets)
-        self.dlg.labA.setText('{:.4f}'.format(a))
-        self.dlg.labB.setText('{:.4f}'.format(b))
-        
         
     
     def run(self):
-        print("starting")
+        print("starting spectreviewer")
         """Run method that loads and starts the plugin"""
         if not self.pluginIsActive:
             self.pluginIsActive = True
