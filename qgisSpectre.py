@@ -391,10 +391,13 @@ class qgisSpectre:
             # Does a five times sum smoothing
             s=self.smoothsum(s,m)
         # s holds a Mariscotti data set. Where s < 0 there is a peak
-        peak=[]
-        peakstart=0
-        peaks=[]
-        peakranges=[]
+        peak = []
+        peakstart = 0
+        peaks = []
+        peakranges = []
+        self.fullpeaks = []
+        coefs = [-2,3,6,7,6,3,-2] # For Savgol smooth
+                    
         # Going through the Mariscotti data set to look for peaks
         for ch in range(len(s)):
             if peak != []:
@@ -427,21 +430,23 @@ class qgisSpectre:
                     for i in range(len(peakvalues)):
                         val=peakvalues[i]-(i*a+pre)
                         peakadj.append(val)
-                    coefs = [-2,3,6,7,6,3,-2]
-                    peakadj = self.savgolsmooth(peakadj,coefs)
-                    maxval = max(peakadj)
-                    maxch = peakadj.index(maxval)+peakstart+1
+                    peaksmooth = self.savgolsmooth(peakadj,coefs)
+                    maxval = max(peaksmooth)
+                    maxch = peaksmooth.index(maxval)+peakstart+1
                     # TODO: Fit a gaussian to peakadj to find peak channel
                     peaks.append(maxch)
                     peakranges.append([peakstart,ch-1])
+                    self.fullpeaks.append({'rawvalues' : peakvalues,'adjusted' : peakadj,'smoothed' : peaksmooth})
+                    # Prepares for next peak
                     peak = []
             if s[ch] is not None and s[ch] < 0:
                 # This may start a new peak, if so peakstart must be stored,
                 # if it is an ongoing peak, just append the channel value
                 if peak == []:
                     peakstart=ch
-                    
                 peak.append(s[ch])
+        if self.debug:
+            print(self.fullpeaks)
         return(list(zip(peaks, peakranges)))
     
     def savgolsmooth(self,data,coefs):
@@ -457,6 +462,10 @@ class qgisSpectre:
             for j in range(-1*halfwin,halfwin+1):
                 sgsum += data[i+j] * coefs[j+halfwin]
             smoothed.append(sgsum/fact)
+        if self.debug:
+            print(f'data:{data}')
+            print(f'smooth:{smoothed}')
+        
         return(smoothed)
     
         
@@ -778,7 +787,7 @@ class qgisSpectre:
         if not self.pluginIsActive:
             self.pluginIsActive = True
             self.scene = QGraphicsScene()
-            self.debug = False
+            self.debug = True
             # Storing the spectra to be able to read out values later on
             # Setting the values storing line and text shown when the mouse button is clicked
             self.scene.crdtext = None
