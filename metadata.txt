@@ -5,7 +5,7 @@ description=View spectra stored in a geodataset.
 version=1.21
 author=Morten Sickel
 email=morten@sickel.net 
-about=The plugin is for plotting georeferenced spectral data, e.g. from carborne or aerial gamma surveys. The specte must be stored in an array, either as a postgres array datafield or as a comma separated string with an integer for each channel. In the plugin, select the the data set and in which field the spectra are stored. When features in the dataset are selected, the integrated spectra over these features will be displayed. Click in spectra to read values. Use arrow keys to move, esc to remove the reader line. Spectre values can be copied and pasted as a comma separated string of integers. The spectra can be saved as an image.     
+about=The plugin is for plotting georeferenced spectral data, e.g. from carborne or aerial gamma surveys. The spectre must be stored in an array, either as a postgres array datafield or as a comma separated string with an integer for each channel. In the plugin, select the the data set and in which field the spectra are stored. When features in the dataset are selected, the integrated spectra over these features will be displayed. Click in spectra to read values. Use arrow keys to move, esc to remove the reader line. Spectre values can be copied and pasted as a comma separated string of integers. The spectra can be saved as an image.     
     <b>Peak detection</b>  
     The plugin will detect peaks in the spectrum. A linear calibration can be set up from channel numbers to energy. The peaks will be listed and each peak can be assigned a value calculate a new calibration. Check "use" to apply the calculated calibration. If a peak corresponds to a known nuclide, the nuclide will be indicated. (The nuclide information is stored in gammas.yml in the plugin directory, any updates to this file will be overwritten when the plugin is updated)
     <b>Other plugins</b>
@@ -17,12 +17,10 @@ tracker=https://github.com/sickel/qgisSpectre/issues
 repository=https://github.com/sickel/qgisSpectre
 # End of mandatory metadata
  
-Recommended items: Stripchart
- 
+Recommended items: Stripchartdrawer, spectral data loader,Altitudeconverter
 hasProcessingProvider=no
-# Uncomment the following line and add your changelog:
 changelog=
-    *  V1.21 Updated metafile, better description of the plugin
+    *  V1.21 Updated metafile, better description of the plugin, some UI and error handling clean up
     *  V1.2 Can calculate linear calibration. User selectable accuracy for detection
     *  V1.1 various clean up, indicates nuclides for detected peaks.  Updated UI, peak detection, paste spectra
  
@@ -32,7 +30,6 @@ tags=gamma monitoring,radiation,Spectrometry
 homepage=https://github.com/sickel/qgisSpectre
 category=Vector
 icon=icon.png
-# experimental flag
 experimental=False
  
 # deprecated flag (applies to the whole plugin, not just a single version)

@@ -30,7 +30,7 @@ View spectra stored in a geodataset. The spectral data must be stored in an arra
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 import qgis.PyQt.QtCore
 from qgis.PyQt.QtGui import QIcon, QImage, QPainter
-from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication,QGraphicsView,QCheckBox, QFileDialog, QTableWidgetItem
+from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication,QGraphicsView,QCheckBox, QFileDialog, QTableWidgetItem, QHeaderView
 from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QColor
 # Initialize Qt resources from file resources.py
@@ -268,7 +268,6 @@ class qgisSpectre:
             if self.debug:
                 self.scene.addLine(1.0,float(h),1000.0,float(h))
                 self.scene.addLine(1.0,0.0,1000.0,0.0   )
-            
             acalib=self.scene.acalib
             bcalib=self.scene.bcalib
             maxval=acalib*len(data)+bcalib
@@ -347,7 +346,7 @@ class qgisSpectre:
         ntext.setPos(left + 2,1)
         if self.dlg.cBautodetect.isChecked():
             self.detectpeaks(data)
-    
+            
     def smoothsum(self,s,m):
         smoothed=[]
         lastch=len(s)
@@ -464,9 +463,9 @@ class qgisSpectre:
         # DONE: Another color for marker
         # DONE: Recalculate peak with correct baseline
         # DONE: Calculate peaks on smoothed spectrum
-        # TODO: Find nuclides with correct energy
+        # DONE: Find nuclides with correct energy
         # DONE: Print channel# or energy
-        # TODO: Remove exsisting markers
+        # DONE: Remove exsisting markers
         if spectre is None or not spectre:
             spectre=self.view.spectreval
         x=list(range(len(spectre)))
@@ -483,7 +482,6 @@ class qgisSpectre:
                 print("peakdescriptions problem")
                 # Need some better handling?
         self.scene.peakdescriptions=[]
-
         bt=self.scene.bottom
         h=self.scene.h
         top = self.scene.top
@@ -495,6 +493,11 @@ class qgisSpectre:
         peaktablewidget = self.dlg.tWpeaktable 
         peaktablewidget.setRowCount(len(self.peaks))
         peaktablewidget.setColumnCount(3)
+        header = peaktablewidget.horizontalHeader()
+        # Making correct widths for table columns
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.Stretch)
         peaktablewidget.setHorizontalHeaderLabels(["Channel","Energy","Target"])
         line = 0
         for(x,ends) in self.peaks:
@@ -569,6 +572,7 @@ class qgisSpectre:
                     # To keep the overview and be able to remove later o
                     pt = self.scene.addText(nuc)
                     pt.setPos(xcoord+1,1)
+                    pt.setTextWidth(50)
                     self.scene.nuklines.append(pt)
                     # As above
                 except NameError as e:
@@ -640,9 +644,12 @@ class qgisSpectre:
             #        level=Qgis.Success, duration=3)
             fieldname=self.dlg.qgField.currentText()
             # DONE: Rewrite to make it possible to read in a spectra as a string of comma-separated numbers
-            if fieldname=='' or fieldname is None:
+            if fieldname == '' or fieldname is None:
                 return # Invalid fieldname, probably not selected yet
-            stringspec = isinstance(sels[0][fieldname],str)
+            try:
+                stringspec = isinstance(sels[0][fieldname],str)
+            except KeyError:
+                return # Invalid fieldname, probably set from a dataset with other fields
             stringspec = stringspec and (sels[0][fieldname].find(',') != -1)
             if isinstance(sels[0][fieldname],list) or stringspec:
                 # Only draw if a list field is selected
@@ -928,7 +935,7 @@ class MouseReadGraphicsView(QGraphicsView):
         """ Press the left mouse button to draw a line and print the energy at the point"""
         
         if event.button() == 1:
-            if self.scene is None or self.scene().left is None: # Not yet initialized
+            if self.scene() is None or self.scene().left is None: # Not yet initialized
                 return
             coords=self.mapToScene(event.pos())    
             x = coords.x()
