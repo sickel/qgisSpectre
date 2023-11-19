@@ -61,11 +61,13 @@ class qgisSpectre:
         """
         # Save reference to the QGIS interface
         self.iface = iface
-        
         self.dlg=qgisSpectreDockWidget(self.iface.mainWindow())
         # stops it from showing up when starting QGIS
-        if self.dlg.isVisible():
+        try:    
             self.dlg.close()
+        except:
+            print("Should not be open here")
+            # It should not open when QGIS is started
         self.pluginIsActive = None
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
