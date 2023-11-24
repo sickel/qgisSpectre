@@ -1,19 +1,18 @@
-# This file contains metadata for your plugin.
- 
-# This file should be included when you package your plugin.# Mandatory items:
- 
 [general]
 name=Spectre Viewer
 qgisMinimumVersion=3.0
-description=View spectra stored in a geodataset. The spectral data must be stored in an array, e.g. as an postgres array datafield or as a comma separated string. When features in the dataset are selected, the integrated spectra over these features will be displayed. Click in spectra to read out values. Use arrowkeys to move. Spectre values can be copied and pasted as a comma separated string of integers. Simple peak detection. 
-V1.1 various clean up, indicates nuclides for detected peaks.
-V1.2 Can calculate linear calibration. User selectable accuracy for detection
-version=1.2
+description=View spectra stored in a geodataset. 
+version=1.21
 author=Morten Sickel
-email=morten@sickel.net
- 
-about=View spectra stored in a geodataset. 
- 
+email=morten@sickel.net 
+about=The plugin is for plotting georeferenced spectral data, e.g. from carborne or aerial gamma surveys. The specte must be stored in an array, either as a postgres array datafield or as a comma separated string with an integer for each channel. In the plugin, select the the data set and in which field the spectra are stored. When features in the dataset are selected, the integrated spectra over these features will be displayed. Click in spectra to read values. Use arrow keys to move, esc to remove the reader line. Spectre values can be copied and pasted as a comma separated string of integers. The spectra can be saved as an image.     
+    <b>Peak detection</b>  
+    The plugin will detect peaks in the spectrum. A linear calibration can be set up from channel numbers to energy. The peaks will be listed and each peak can be assigned a value calculate a new calibration. Check "use" to apply the calculated calibration. If a peak corresponds to a known nuclide, the nuclide will be indicated. (The nuclide information is stored in gammas.yml in the plugin directory, any updates to this file will be overwritten when the plugin is updated)
+    <b>Other plugins</b>
+    There are three other plugins that are made to be used together with this plugin:
+    * Spectral data loader: Reads in .spe files or an ascii file exported from RSI software and stores the data in a suitable format for the spectre viewer. It should not be too hard to extend this for other text based spectral formats. Contact the author if that should be needed.
+    * Stripchartdrawer: Draws a strip chart of one of the numeric values from a data set. Makes it possible to select e.g. points with high dose rates
+    * Altitudeconverter: To estimate the parameters to calculate ground bases values from airborne gamma surveys.
 tracker=https://github.com/sickel/qgisSpectre/issues
 repository=https://github.com/sickel/qgisSpectre
 # End of mandatory metadata
@@ -22,7 +21,10 @@ Recommended items: Stripchart
  
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=Updated UI, peak detection, paste spectra
+changelog=
+    *  V1.21 Updated metafile, better description of the plugin
+    *  V1.2 Can calculate linear calibration. User selectable accuracy for detection
+    *  V1.1 various clean up, indicates nuclides for detected peaks.  Updated UI, peak detection, paste spectra
  
 # Tags are comma separated with spaces allowed
 tags=gamma monitoring,radiation,Spectrometry
