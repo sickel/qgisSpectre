@@ -326,7 +326,7 @@ class qgisSpectre:
         try:
             fact=(h-bt-top)/max(dataset)
         except ZeroDivisionError:
-            self.iface.messageBar().pushMessage("Data Loader", f"No valid g data in spectre'", level=Qgis.Critical)
+            self.iface.messageBar().pushMessage("Data Loader", f"No valid data in spectre'", level=Qgis.Critical)
             return
         prevvalue=0
         ch=self.scene.left
