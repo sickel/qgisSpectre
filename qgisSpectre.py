@@ -71,7 +71,6 @@ class qgisSpectre:
         self.pluginIsActive = None
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
-
         # initialize locale
         locale = QSettings().value('locale/userLocale')[0:2]
         locale_path = os.path.join(
@@ -319,11 +318,16 @@ class qgisSpectre:
         #TODO: Save different set of calibration values
         
         # Scales the spectra to fit with the size of the graphicsview
+        
         bt = self.scene.bottom
         top = self.scene.top
         h = self.scene.h-self.scene.bottom
         fact = 1.0
-        fact=(h-bt-top)/max(dataset)
+        try:
+            fact=(h-bt-top)/max(dataset)
+        except ZeroDivisionError:
+            self.iface.messageBar().pushMessage("Data Loader", f"No valid g data in spectre'", level=Qgis.Critical)
+            return
         prevvalue=0
         ch=self.scene.left
         for chvalue in dataset:
