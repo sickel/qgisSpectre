@@ -27,7 +27,7 @@ View spectra stored in a geodataset. The spectral data must be stored in an arra
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QSize, QRectF
 import qgis.PyQt.QtCore
 from qgis.PyQt.QtGui import QIcon, QImage, QPainter
 from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication,QGraphicsView,QCheckBox, QFileDialog, QTableWidgetItem, QHeaderView
@@ -243,8 +243,16 @@ class qgisSpectre:
             layer=self.dlg.qgLayer.currentLayer()
             if layer==None:
                 return # Happens some times, just as well to return
-            self.scene.acalib=float(self.dlg.leA.text())
-            self.scene.bcalib=float(self.dlg.leB.text())
+            try:
+                acalib = float(self.dlg.leA.text())
+                bcalib = float(self.dlg.leB.text())
+            except ValueError:
+                self.iface.messageBar().pushMessage(
+                       'Invalid calibration value',
+                        level=Qgis.Warning, duration=15)
+                return
+            self.scene.acalib = acalib
+            self.scene.bcalib = bcalib
             self.updateUnit()
             data=self.view.spectreval
             # Prepares background and axis
@@ -926,13 +934,16 @@ class MouseReadGraphicsView(QGraphicsView):
         fileName, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()","","Image files (*.png);;All Files (*)", options=options)
         if not fileName:
             return
+        if not fileName.endswith('.png'):
+            fileName += '.png'
         # Get region of scene to capture from somewhere.
         area = self.scene().sceneRect()
         # Create a QImage to render to and fix up a QPainter for it.
-        image = QImage(area.width(),area.height(), QImage.Format_ARGB32_Premultiplied)
+        image = QImage(area.toRect().size(), QImage.Format_ARGB32_Premultiplied)
         painter = QPainter(image)
         # Render the region of interest to the QImage.
-        self.scene().render(painter)
+        self.scene().render(painter, QRectF(image.rect()),  # target
+                    area)
         painter.end()
         # Save the image to a file.
         image.save(fileName)
