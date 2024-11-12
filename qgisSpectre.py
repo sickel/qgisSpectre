@@ -304,10 +304,12 @@ class qgisSpectre:
         if logscale:
             dataset=[]
             for ch in data:
+                if ch < self.minvalue and ch > 0:
+                    ch = self.minvalue
                 if ch==0:
-                    ch=0.9
-                dataset.append(math.log(ch)-math.log(0.9))
-                # 0.9 offset and back to be able to plot zero-values
+                    ch=self.logoffset
+                dataset.append(math.log(ch)-math.log(self.logoffset))
+                
         else:
             dataset=data
         
@@ -501,7 +503,7 @@ class qgisSpectre:
         top = self.scene.top
         maxval=max(spectre)
         if self.dlg.cbLog.isChecked():
-            maxval=math.log(maxval)-math.log(0.9)
+            maxval=math.log(maxval)-math.log(self.logoffset)
         fact=(h-bt-top)/maxval
         bluepen = QPen(QBrush(QColor(0,0,255,100)), 2, Qt.DashLine)
         peaktablewidget = self.dlg.tWpeaktable 
@@ -519,8 +521,8 @@ class qgisSpectre:
             y=n
             if self.dlg.cbLog.isChecked():
                 if n==0:
-                    n=0.9
-                y=math.log(n)-math.log(0.9)
+                    n=self.logoffset
+                y=math.log(n)-math.log(self.logoffset)
             ycoord = h-bt-fact*y
             xcoord = float(self.scene.left+x)
             pl=self.scene.addLine(xcoord,ycoord-10,xcoord,ycoord+10,bluepen)
@@ -672,7 +674,7 @@ class qgisSpectre:
                     spectre=sel[fieldname]
                     if stringspec:
                         vals=spectre.split(',')
-                        spectre = list(map(int, vals))
+                        spectre = list(map(float, vals))
                     del spectre[-1] # To get rid of last channel i.e. cosmic from RSI-spectra
                                     # TODO: customable removal of channels at top and/or bottom
                     if sumspectre is None:
@@ -861,6 +863,12 @@ class qgisSpectre:
             #for nuk in self.gammas:
             #    for energy in self.gammas[nuk]
             #        self.
+            # Need to be able to print 0-values on a log scale.
+            # Defines a offset where the 0 values are to be plotted.
+            # A minimum value is set, all values below are adjusted up to this
+            self.logoffset = 0.45
+            self.minvalue = 0.5
+            
             
     def copycalibdata(self):        
         if self.dlg.cbUseCalibration.isChecked():
