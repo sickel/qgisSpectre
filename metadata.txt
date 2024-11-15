@@ -2,7 +2,7 @@
 name=Spectre Viewer
 qgisMinimumVersion=3.0
 description=View spectra stored in a geodataset. 
-version=1.21
+version=1.3
 author=Morten Sickel
 email=morten@sickel.net 
 about=The plugin is for plotting georeferenced spectral data, e.g. from carborne or aerial gamma surveys. The spectre must be stored in an array, either as a postgres array datafield or as a comma separated string with an integer for each channel. In the plugin, select the the data set and in which field the spectra are stored. When features in the dataset are selected, the integrated spectra over these features will be displayed. Click in spectra to read values. Use arrow keys to move, esc to remove the reader line. Spectre values can be copied and pasted as a comma separated string of integers. The spectra can be saved as an image.     
@@ -20,9 +20,10 @@ repository=https://github.com/sickel/qgisSpectre
 Recommended items: Stripchartdrawer, spectral data loader,Altitudeconverter
 hasProcessingProvider=no
 changelog=
+    *  V1.3  New code for saving image. Error handling of invalid calibration data  
     *  V1.21 Updated metafile, better description of the plugin, some UI and error handling clean up
-    *  V1.2 Can calculate linear calibration. User selectable accuracy for detection
-    *  V1.1 various clean up, indicates nuclides for detected peaks.  Updated UI, peak detection, paste spectra
+    *  V1.2  Can calculate linear calibration. User selectable accuracy for detection
+    *  V1.1  various clean up, indicates nuclides for detected peaks.  Updated UI, peak detection, paste spectra
  
 # Tags are comma separated with spaces allowed
 tags=gamma monitoring,radiation,Spectrometry
