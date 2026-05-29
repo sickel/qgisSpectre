@@ -31,13 +31,13 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QSize
 import qgis.PyQt.QtCore
 from qgis.PyQt.QtGui import QIcon, QImage, QPainter
 from qgis.PyQt.QtWidgets import QAction,QGraphicsScene,QApplication,QGraphicsView,QCheckBox, QFileDialog, QTableWidgetItem, QHeaderView
-from PyQt5.QtGui import QIcon
-from PyQt5.QtGui import QColor
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtGui import QColor
 # Initialize Qt resources from file resources.py
 from .resources import *
 from operator import add # To add spectra
 
-from PyQt5 import QtCore,QtGui
+from qgis.PyQt import QtCore,QtGui
 from qgis.core import QgsProject, Qgis, QgsMapLayerType, QgsMapLayer,QgsMapLayerProxyModel,QgsFieldProxyModel,QgsSettings
 from qgis.PyQt.QtGui import QPen, QBrush
 # Import the code for the DockWidget
@@ -237,7 +237,7 @@ class qgisSpectre:
     def drawspectra(self,data=None):
         """ Drawing the spectra on the graphicsstage """
         if data is None:
-            spectrepen=QPen(Qt.black)
+            spectrepen=QPen(Qt.GlobalColor.black)
             layername=self.dlg.qgLayer.currentText()
             fieldname=self.dlg.qgField.currentText()
             layer=self.dlg.qgLayer.currentLayer()
@@ -260,8 +260,8 @@ class qgisSpectre:
             self.scene.clear()
             self.scene.crdtext=None
             self.scene.markerline=None
-            backgroundbrush=QBrush(Qt.white)
-            outlinepen=QPen(Qt.white)
+            backgroundbrush=QBrush(Qt.GlobalColor.white)
+            outlinepen=QPen(Qt.GlobalColor.white)
             self.scene.bottom=20 # Bottom clearing (for x tick marks and labels)
             self.scene.left=self.scene.bottom # Left clearing (for y tick marks and labels)
             self.scene.top = 30
@@ -299,7 +299,7 @@ class qgisSpectre:
                 tickval+=tickdist
         # Setting unit for ticks further down, after the size of the spectra is found    
         else:
-            spectrepen=QPen(Qt.red)
+            spectrepen=QPen(Qt.GlobalColor.red)
         logscale=self.dlg.cbLog.isChecked()
         if logscale:
             dataset=[]
@@ -505,15 +505,15 @@ class qgisSpectre:
         if self.dlg.cbLog.isChecked():
             maxval=math.log(maxval)-math.log(self.logoffset)
         fact=(h-bt-top)/maxval
-        bluepen = QPen(QBrush(QColor(0,0,255,100)), 2, Qt.DashLine)
+        bluepen = QPen(QBrush(QColor(0,0,255,100)), 2, Qt.PenStyle.DashLine)
         peaktablewidget = self.dlg.tWpeaktable 
         peaktablewidget.setRowCount(len(self.peaks))
         peaktablewidget.setColumnCount(3)
         header = peaktablewidget.horizontalHeader()
         # Making correct widths for table columns
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.Stretch)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         peaktablewidget.setHorizontalHeaderLabels(["Channel","Energy","Target"])
         line = 0
         for(x,ends) in self.peaks:
@@ -557,7 +557,7 @@ class qgisSpectre:
                 print('Some problems here, removing nukline')
         self.scene.nuklines=[]
         #yellowpen = QPen(QBrush(QColor(255,255,0,100)), 2, Qt.DashLine)
-        linepen = QPen(QBrush(QColor(255,0,0,100)), 1, Qt.DashLine) # red! 
+        linepen = QPen(QBrush(QColor(255,0,0,100)), 1, Qt.PenStyle.DashLine) # red! 
         chaccuracy = float(self.dlg.leAccuracy.text())/100
         for nuc in self.gammas:
             for e in self.gammas[nuc]:
@@ -844,7 +844,7 @@ class qgisSpectre:
             # connect to provide cleanup on closing of dockwidget
             self.dlg.closingPlugin.connect(self.onClosePlugin)
             # show the dockwidget
-            self.iface.mainWindow().addDockWidget(Qt.BottomDockWidgetArea, self.dlg)
+            self.iface.mainWindow().addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.dlg)
             self.dlg.show()
             self.dlg.cbLog.stateChanged.connect(self.findselected)
             self.dlg.cbUseCalibration.stateChanged.connect(self.copycalibdata)
@@ -916,21 +916,21 @@ class MouseReadGraphicsView(QGraphicsView):
     def keyPressEvent(self,event):
         ### Reads key presses to move marker line """
         #TODO: Use proper key constants
-        if event.key()==Qt.Key_Space:
+        if event.key()==Qt.Key.Key_Space:
             self.saveImage()
             return
-        if event.key()==Qt.Key_Right: #16777236: #right arrowkey
+        if event.key()==Qt.Key.Key_Right: #16777236: #right arrowkey
             self.linex+=1
-        if event.key()==Qt.Key_Left: #16777234: # left arrowkey
+        if event.key()==Qt.Key.Key_Left: #16777234: # left arrowkey
             self.linex-=1
-        if event.key()==Qt.Key_Up: #16777235: # up arrow
+        if event.key()==Qt.Key.Key_Up: #16777235: # up arrow
             self.linex+=10
-        if event.key()==Qt.Key_Down: #16777237: # down arrow
+        if event.key()==Qt.Key.Key_Down: #16777237: # down arrow
             self.linex-=10
         self.linex=max(self.scene().left,self.linex)
         self.linex=min(self.scene().end,self.linex)
         self.drawline()
-        if event.key()==Qt.Key_Escape: # To  be set to Esc 
+        if event.key()==Qt.Key.Key_Escape: # To  be set to Esc 
             if self.scene().crdtext is not None:
                 self.scene().removeItem(self.scene().crdtext)
             if self.scene().markerline is not None:
@@ -938,7 +938,7 @@ class MouseReadGraphicsView(QGraphicsView):
         
     def saveImage(self):
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        options |= QFileDialog.Option.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()","","Image files (*.png);;All Files (*)", options=options)
         if not fileName:
             return
@@ -947,7 +947,7 @@ class MouseReadGraphicsView(QGraphicsView):
         # Get region of scene to capture from somewhere.
         area = self.scene().sceneRect()
         # Create a QImage to render to and fix up a QPainter for it.
-        image = QImage(area.toRect().size(), QImage.Format_ARGB32_Premultiplied)
+        image = QImage(area.toRect().size(), QImage.Format.Format_ARGB32_Premultiplied)
         painter = QPainter(image)
         # Render the region of interest to the QImage.
         self.scene().render(painter, QRectF(image.rect()),  # target
